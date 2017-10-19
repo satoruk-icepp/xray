@@ -11,13 +11,11 @@
 #define NRow 93
 #define NLine 44
 
-
-
-//void xray_ana(Int_t run, Int_t scan);
+void OneRunAnalysis(int run, int scan);
 Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */);
 Int_t arraysearch(std::vector<Double_t> array, Double_t value);
 Double_t ArbFunc(Double_t *x,Double_t *par);
-void OneRunAnalysis(int run, int scan);
+
 /*
 Analysis of X-ray meas.
 xra_ana(Int_t run, Int_t scan)
@@ -71,7 +69,7 @@ Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 void xray_general(){
   //TCanvas* canvas1=new TCanvas("canvas1","map",600,600);
 
-  TFile *fall =new TFile("xray_allch.root","RECREATE");
+  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch.root","RECREATE");
   TTree *tall =new TTree("xrayac","xrayac");
   //TGraphErrors* grPhiPosAllch =new TGraphErrors();
   Int_t ChNum;
@@ -144,10 +142,9 @@ void xray_general(){
 
 
 //________________________________________________________________________________
-Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */) {
-  return x == 0.0 && y == 0.0 ? 0.0 : 180 * degree + TMath::ATan2(-y, -x) * radian;
-}
-
+  Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */) {
+	return x == 0.0 && y == 0.0 ? 0.0 : 180 + TMath::ATan2(-y, -x) *180/ TMath::Pi();
+  }
 
 Int_t arraysearch(std::vector<Double_t> array, Double_t value){
   Bool_t found=false;
@@ -251,6 +248,7 @@ void OneRunAnalysis(int run, int scan) {
   Double_t TopLine[kNchforXray];
   TH1I* ScalerHist[kNchforXray];
   //TF1* BaseGaus[kNchforXray];
+  Double_t ScalerAverage[kNchforXray];
 
   for (Int_t iScalerCh = 0; iScalerCh < kNchforXray; iScalerCh++) {
     grScaler[iScalerCh] = new TGraph();
@@ -270,6 +268,7 @@ void OneRunAnalysis(int run, int scan) {
   }
 
   /*-----Baseline determination----*/
+  Bool_t HighScaler=false;
   Int_t Scaler_buf;
   Float_t BeamZ_buf, BeamPhi_buf;
   for (Int_t iEvent = 0; iEvent < nEvent; iEvent++) {
@@ -280,15 +279,15 @@ void OneRunAnalysis(int run, int scan) {
     Int_t nTRGScalerEntries = recTRGScaler->GetEntriesFast();
     if (nTRGScalerEntries < kNchforXray) return;
     for (Int_t iScalerCh = 0; iScalerCh < kNchforXray; iScalerCh++) {
-      BeamZ_buf = recXRAYData->GetBeamZ();
-      BeamPhi_buf = recXRAYData->GetBeamPhi();
       Scaler_buf = ((MEGTRGScaler*)(recTRGScaler->At(iScalerCh)))->GetScaler();
       ScalerHist[iScalerCh]->Fill(Scaler_buf);
+	  ScalerAverage[iScalerCh]+=Scaler_buf;
     }
   }
 
   /*Fitting Section*/
   for (Int_t iScalerCh = 0; iScalerCh < kNchforXray; iScalerCh++) {
+	ScalerAverage[iScalerCh]=ScalerAverage[iScalerCh]/nEvent;
     if (valid[iScalerCh]){
       Double_t histmean=ScalerHist[iScalerCh]->GetMean();
       Double_t histRMS=ScalerHist[iScalerCh]->GetRMS();

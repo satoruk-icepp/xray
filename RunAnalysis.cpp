@@ -11,7 +11,6 @@
 #define NRow 93
 #define NLine 44
 
-//void xray_ana(Int_t run, Int_t scan);
 Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */);
 Int_t arraysearch(std::vector<Double_t> array, Double_t value);
 Double_t ArbFunc(Double_t *x,Double_t *par);
@@ -29,7 +28,7 @@ scan : drection of scan. 0: Phi scan, 1 : Z scan
 
 void RunAnalysis(int run, int scan,int OneCh) {
 
-  TFile *fout =new TFile(Form("xray_%06d_%01d.root",run,scan),"RECREATE");
+  TFile *fout =new TFile(Form("$(MEG2SYS)/analyzer/x-ray/xray_%06d_%01d.root",run,scan),"RECREATE");
   TTree *tout =new TTree("xray","xray");
   Int_t SiPMchNum;  
   Double_t SiPMPos;
