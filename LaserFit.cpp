@@ -1,22 +1,62 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+
+using namespace std;
+
+Double_t Rad2Deg(Double_t Rad);
 
 void LaserFit(){
+  string datapath="/meg/home/kobayashi_s/meg2/analyzer/x-ray/data/";
+  string USFileName=datapath+ "LaserDataUS.txt";
+  std::ifstream ifUS(USFileName);
+  string str;
+  if(ifUS.fail()) {
+	cerr << "File do not exist.\n";
+	exit(0);
+  }
+  TGraph2D *grUS = new TGraph2D();
+  while(getline(ifUS, str)) {
+	Float_t XPos;
+	Float_t YPos;
+	Float_t ZPos;
+	sscanf(str.data(), "%f\t%f\t%f", &XPos, &YPos, &ZPos);
+	grUS->SetPoint(grUS->GetN(),XPos,YPos,ZPos);
+
+  }
   TCanvas* canvas1 = new TCanvas("canvas1", "Upstream",600,600);
   TCanvas* canvas2 = new TCanvas("canvas2", "Downstream",600,600);
-  TGraph2D *grUS = new TGraph2D("$MEG2SYS/analyzer/x-ray/data/LaserDataUS.txt");
+ 
   TGraph2D *grDS = new TGraph2D("$MEG2SYS/analyzer/x-ray/data/LaserDataDS.txt");
 
-  TF2 *plainUS = new TF2("planeUS", "-tan([0])*(sin([1])*x-cos([1])*y)+[2]",-1500,1500,-1500,1500);
-  TF2 *plainDS = new TF2("planeDS", "-tan([0])*(sin([1])*x-cos([1])*y)+[2]",-1500,1500,-1500,1500);
+  TString PlaneName= "-tan([0])*(sin([1])*x-cos([1])*y)+[2]";
+
+  TF2 *plainUS = new TF2("planeUS",PlaneName,-1500,1500,-1500,1500);
+  plainUS->SetParameters(0,0,-600);
+  TF2 *plainDS = new TF2("planeDS", PlaneName,-1500,1500,-1500,1500);
+  plainDS->SetParameters(0,0,600);
+  //TF1 *dummy = new TF1("dummy","x+cos(1)");
+  //TCanvas* dum=new TCanvas("dummy","dumy",500,500);
+  //dum->cd();
+  //dummy->Draw();
   //Up stream
   canvas1->cd();
   grUS->Fit("planeUS","N");
   grUS->SetMaximum(1500);
   grUS->SetMinimum(-1500);
+  grUS->GetXaxis()->SetLimits(-1500,1500);
+  grUS->GetYaxis()->SetLimits(-1500,1500);
   grUS->SetMarkerStyle(22);
-  grDS->SetTitle("UpStream side face;X Position[mm];Y Position[mm]");
+  plainUS->SetTitle("UpStream side face;Z Position[mm];X Position[mm];Y Position[m]");
 
-  grUS->Draw("ap");
-  //plainUS->Draw("same");
+  plainUS->Draw("surf");
+  grUS->Draw("same p0");
+  Double_t ThetaUS = plainUS->GetParameter(0);
+  Double_t PhiUS = plainUS->GetParameter(1);
+  Double_t DegThetaUS = Rad2Deg(ThetaUS);
+  Double_t DegPhiUS = Rad2Deg(PhiUS);
+  std::cout<< "Tilt Angle Theta(about Y axis):  "<<DegThetaUS<<std::endl;
+  std::cout<< "Rotation Angle Phi(about Z axis):  "<<DegPhiUS<<std::endl;
   //Down Stream
   canvas2->cd();
   grDS->GetXaxis()->SetLimits(-1500,1500);
@@ -27,13 +67,19 @@ void LaserFit(){
   //plainDS->Draw("same");
 }
 
+Double_t Rad2Deg(Double_t Rad){
+Double_t degree =Rad*180/TMath::Pi();
+ Int_t range = floor(degree/360);
+  return 
+}
+/*
 Double_t Plane(Double_t *x, Double_t *par){
   Double_t xx=x[0];
   Double_t yy=x[1];
   Double_t z = par[0]*xx+par[1]*yy+par[2];
   return z;
 
-}
+  }*/
 
 /*Double_t XECCylinder(Double_t *x,Double_t *par){
 	Float_t xx=x[0];
