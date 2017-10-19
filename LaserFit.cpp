@@ -5,6 +5,7 @@
 using namespace std;
 
 Double_t Rad2Deg(Double_t Rad);
+Double_t PlaneEq(Double_t *x,Double_t *par);
 
 void LaserFit(){
   string datapath="/meg/home/kobayashi_s/meg2/analyzer/x-ray/data/";
@@ -50,9 +51,8 @@ void LaserFit(){
   TCanvas* canvas2 = new TCanvas("canvas2", "Downstream",600,600);
   TCanvas* canvas3 = new TCanvas("canvas3", "Overall",600,600);
 
-  TString PlaneName= "-tan([0])*(sin([1])*x-cos([1])*y)+[2]";
-  TF2 *plainUS = new TF2("planeUS",PlaneName,-1500,1500,-1500,1500);
-  TF2 *plainDS = new TF2("planeDS", PlaneName,-1500,1500,-1500,1500);
+  TF2 *plainUS = new TF2("planeUS",PlaneEq,-1500,1500,-1500,1500,3);
+  TF2 *plainDS = new TF2("planeDS", PlaneEq,-1500,1500,-1500,1500,3);
   plainUS->SetParameters(0,0,-600);
   plainDS->SetParameters(0,0,600);
 
@@ -67,6 +67,7 @@ void LaserFit(){
   grUS->SetMarkerColor(kBlue);
   TString UpTitle="UpStream side face;";
   TString DownTitle="DownStream side face;";
+  TString AllTitle="Both faces;";
   TString AxisTitle="X Position[mm];Y Position[mm];Z Position[m]";
   plainUS->SetTitle(UpTitle+AxisTitle);
   plainUS->Draw("surf");
@@ -98,9 +99,45 @@ void LaserFit(){
   std::cout<< "Rotation Angle Phi(about Z axis):  "<<DegPhiDS<<std::endl;
 
   canvas3->cd();
-  grUS->Draw("p");
-  grDS->Draw("p same");
+  grUS->SetTitle(AllTitle+AxisTitle);
+  plainDS->SetRange (-1500,-1500,-1500,1500,1500,1500);
+  plainDS->Draw("surf");
 
+  grUS->Draw("p same");
+  grDS->Draw("p same");
+  Double_t planepar[3];
+  for(int i=0;i<3;i++){
+	planepar[i]=	plainUS->GetParameter(i);
+
+  }
+  /*
+	auto chi2Function = [&](const Double_t *par, Double_t planepar[3]) {
+	//minimisation function computing the sum of squares of residuals
+	// looping at the graph points
+	Int_t np = grUS->GetN();
+	Double_t f = 0;
+	Double_t *x = grUS->GetX();
+	Double_t *y = grUS->GetY();
+	Double_t *z = grUS->GetZ();
+
+	for (Int_t i=0;i<np;i++) {
+	Double_t u = x[i] - par[0];
+	Double_t v = y[i] - par[1];
+	Double_t coor[2]={x[i],y[i]};
+	Double_t z0 = PlaneEq(coor,*planepar);
+	Double_t w = z[i] - z0;
+	Double_t dr = par[2] - std::sqrt(u*u+v*v+w*w);
+	f += dr*dr;
+	}
+	return f;
+	};*/
+}
+
+Double_t PlaneEq(Double_t *x,Double_t *par){
+  Double_t xx=x[0];
+  Double_t yy=x[1];
+  Double_t f = -tan(par[0])*(cos(par[1])*xx-sin(par[1])*yy)+par[2];
+  return f;
 }
 
 Double_t Rad2Deg(Double_t Rad){
