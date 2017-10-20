@@ -23,7 +23,8 @@ run : run number
 scan : drection of scan. 0: Phi scan, 1 : Z scan
 */
 
-
+Double_t SiPMAllXPos[nMPPC];
+Double_t SiPMAllYPos[nMPPC];
 Double_t SiPMAllPhiPos[nMPPC];
 Double_t SiPMAllPhiPosErr[nMPPC];
 Double_t SiPMAllPhiPosDesign[nMPPC];
@@ -74,6 +75,9 @@ void xray_general(){
   //TGraphErrors* grPhiPosAllch =new TGraphErrors();
   Int_t ChNum;
 
+  Double_t OneChXPos;
+  Double_t OneChYPos;
+
   Double_t OneChPhiPos;
   Double_t OneChPhiPosDesign;
   Double_t OneChPhiPosErr;
@@ -87,6 +91,9 @@ void xray_general(){
   Bool_t OneChDataQualZ;
 
   tall->Branch("ChNum",&ChNum);
+
+  tall->Branch("XPos",&OneChXPos);
+  tall->Branch("YPos",&OneChYPos);
 
   tall->Branch("PhiPos",&OneChPhiPos);
   tall->Branch("PhiPosDesign",&OneChPhiPosDesign);
@@ -110,6 +117,9 @@ void xray_general(){
   Int_t cnt=0;
   for(int iCh=0;iCh<nMPPC;iCh++){
     ChNum=iCh;
+
+	OneChXPos=SiPMAllXPos[iCh];
+	OneChYPos=SiPMAllYPos[iCh];
 	//Phi Position
     OneChPhiPos=SiPMAllPhiPos[iCh];
     OneChPhiPosErr=SiPMAllPhiPosErr[iCh];
@@ -142,9 +152,9 @@ void xray_general(){
 
 
 //________________________________________________________________________________
-  Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */) {
-	return x == 0.0 && y == 0.0 ? 0.0 : 180 + TMath::ATan2(-y, -x) *180/ TMath::Pi();
-  }
+Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */) {
+  return x == 0.0 && y == 0.0 ? 0.0 : 180 + TMath::ATan2(-y, -x) *180/ TMath::Pi();
+}
 
 Int_t arraysearch(std::vector<Double_t> array, Double_t value){
   Bool_t found=false;
@@ -215,6 +225,7 @@ void OneRunAnalysis(int run, int scan) {
   Float_t MPPCXYZ[kNchforXray][3] ={};
   Float_t MPPCPhi[kNchforXray]={};
   Int_t ScalerCh =0;
+  Double_t theta= -TMath::Pi()*0.0/180;
   for (Int_t iPM = 0; iPM < nMPPC; iPM++) {
     pmrh = (MEGXECPMRunHeader*)(pmrhArray->At(iPM));
     if (pmrh->GetDRSAddress() >= 0) {
@@ -224,8 +235,12 @@ void OneRunAnalysis(int run, int scan) {
       valid[ScalerCh] = 1;
       MPPCindex[ScalerCh] = iPM;
       MPPCXYZ[ScalerCh][0] = pmrh->GetXYZAt(0) * 10;
-      MPPCXYZ[ScalerCh][1] = pmrh->GetXYZAt(1) * 10;
-      MPPCXYZ[ScalerCh][2] = pmrh->GetXYZAt(2) * 10;
+	  Double_t tmpy=pmrh->GetXYZAt(1) * 10;
+	  Double_t tmpz=pmrh->GetXYZAt(2) * 10;
+	  Double_t LocalR=sqrt(tmpy*tmpy+tmpz*tmpz);
+	  Double_t LocalPhi = TMath::ATan2(tmpy,tmpz);
+      MPPCXYZ[ScalerCh][1] = LocalR*sin(LocalPhi+theta);
+	  MPPCXYZ[ScalerCh][2] = LocalR*cos(LocalPhi+theta);
       MPPCPhi[ScalerCh] = XYZ2Phi(MPPCXYZ[ScalerCh][0], MPPCXYZ[ScalerCh][1], MPPCXYZ[ScalerCh][2]);
     }
   }
@@ -333,6 +348,8 @@ void OneRunAnalysis(int run, int scan) {
   for (Int_t iScalerCh = 0; iScalerCh < kNchforXray; iScalerCh++) {
     if (valid[iScalerCh]&&grScaler[iScalerCh]->GetN()>10){
       SiPMchNum=MPPCindex[iScalerCh];
+	  SiPMAllXPos[SiPMchNum]=MPPCXYZ[iScalerCh][0];
+	  SiPMAllYPos[SiPMchNum]=MPPCXYZ[iScalerCh][1];
       if(scan==0){
 		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],1.2,1.5,40);
 		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"NQ");

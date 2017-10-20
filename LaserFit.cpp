@@ -20,12 +20,14 @@ void LaserFit(){
 	exit(0);
   }
   TGraph2D *grUS = new TGraph2D();
+  TGraph* ProjUS=new TGraph();
   while(getline(ifUS, strUS)) {
 	Float_t XPos;
 	Float_t YPos;
 	Float_t ZPos;
 	sscanf(strUS.data(), "%f\t%f\t%f", &XPos, &YPos, &ZPos);
 	grUS->SetPoint(grUS->GetN(),XPos,YPos,ZPos);
+	ProjUS->SetPoint(ProjUS->GetN(),XPos,YPos);
 
   }
 
@@ -50,6 +52,8 @@ void LaserFit(){
   TCanvas* canvas1 = new TCanvas("canvas1", "Upstream",600,600);
   TCanvas* canvas2 = new TCanvas("canvas2", "Downstream",600,600);
   TCanvas* canvas3 = new TCanvas("canvas3", "Overall",600,600);
+  TCanvas* canvas4 = new TCanvas("canvas4", "Projection",600,600);
+
 
   TF2 *plainUS = new TF2("planeUS",PlaneEq,-1500,1500,-1500,1500,3);
   TF2 *plainDS = new TF2("planeDS", PlaneEq,-1500,1500,-1500,1500,3);
@@ -108,8 +112,16 @@ void LaserFit(){
   Double_t planepar[3];
   for(int i=0;i<3;i++){
 	planepar[i]=	plainUS->GetParameter(i);
-
   }
+
+  Double_t xy[2]={0,0};
+
+  std::cout<<PlaneEq(xy,planepar)<<std::endl;
+
+
+  canvas4->cd();
+  ProjUS->Draw("ap");
+
   /*
 	auto chi2Function = [&](const Double_t *par, Double_t planepar[3]) {
 	//minimisation function computing the sum of squares of residuals
@@ -132,6 +144,7 @@ void LaserFit(){
 	return f;
 	};*/
 }
+
 
 Double_t PlaneEq(Double_t *x,Double_t *par){
   Double_t xx=x[0];
