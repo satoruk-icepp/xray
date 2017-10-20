@@ -15,7 +15,7 @@ void OneRunAnalysis(int run, int scan);
 Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */);
 Int_t arraysearch(std::vector<Double_t> array, Double_t value);
 Double_t ArbFunc(Double_t *x,Double_t *par);
-
+Double_t TwoGaus(Double_t *x,Double_t *par);
 /*
 Analysis of X-ray meas.
 xra_ana(Int_t run, Int_t scan)
@@ -70,7 +70,7 @@ Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 void xray_general(){
   //TCanvas* canvas1=new TCanvas("canvas1","map",600,600);
 
-  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch.root","RECREATE");
+  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch_dg.root","RECREATE");
   TTree *tall =new TTree("xrayac","xrayac");
   //TGraphErrors* grPhiPosAllch =new TGraphErrors();
   Int_t ChNum;
@@ -174,6 +174,26 @@ Int_t arraysearch(std::vector<Double_t> array, Double_t value){
   return i;
 }
 
+
+Double_t TwoGaus(Double_t *x,Double_t *par){
+  Double_t xx=x[0];
+  Double_t mean=par[0];
+  Double_t topwidth=par[1];
+  Double_t meanfg=par[0]-par[1]/2;
+  Double_t meansg=par[0]+par[1]/2;
+  Double_t sigma=par[2];
+  Double_t height=par[3];
+  Double_t f;
+  if(xx<meanfg){
+	f=height*TMath::Gaus(xx,meanfg,sigma,true);
+  }else if(xx>=meanfg&&xx<meansg){
+	f= height*TMath::Gaus(meanfg,meanfg,sigma,true);
+  }else{
+	f= height*TMath::Gaus(xx,meansg,sigma,true);
+  }
+  return f;
+}
+
 Double_t ArbFunc(Double_t *x,Double_t *par){
   Float_t xx=x[0];
   //Double_t f = par[0]/sqrt(2*TMath::Pi()*par[1])*TMath::Exp(-pow(xx-par[2],2)/(2*par[1]));
@@ -275,10 +295,8 @@ void OneRunAnalysis(int run, int scan) {
     fitfuncname.Form("fit%d",iScalerCh);
     ScalerHist[iScalerCh] = new TH1I(histname,histtitle,30,0,180);
     //BaseGaus[iScalerCh] = new TF1(basefuncname,"[0]*TMath::Gaus(x,[1],[2])");
-    FitFunc[iScalerCh] = new TF1(fitfuncname,ArbFunc,-300,300,4);
-    FitFunc[iScalerCh]->SetParLimits(1,0,15);
-    FitFunc[iScalerCh]->SetParLimits(2,0,25);
-    FitFunc[iScalerCh]->SetParLimits(3,0,80);
+    FitFunc[iScalerCh] = new TF1(fitfuncname,TwoGaus,-300,300,4);
+
 
   }
 
@@ -351,11 +369,16 @@ void OneRunAnalysis(int run, int scan) {
 	  SiPMAllXPos[SiPMchNum]=MPPCXYZ[iScalerCh][0];
 	  SiPMAllYPos[SiPMchNum]=MPPCXYZ[iScalerCh][1];
       if(scan==0){
-		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],1.2,1.5,40);
-		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"NQ");
+		FitFunc[iScalerCh]->SetRange(MPPCPhi[iScalerCh]-15,MPPCPhi[iScalerCh]+15);
+		FitFunc[iScalerCh]->SetParLimits(0,MPPCPhi[iScalerCh]-5,MPPCPhi[iScalerCh]+5);
+		FitFunc[iScalerCh]->SetParLimits(1,0,2);
+		FitFunc[iScalerCh]->SetParLimits(2,0,2);
+		FitFunc[iScalerCh]->SetParLimits(3,0,80);
+		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],0.6,0.1,30);
+		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MNQ");
 		//Fit Quality
 		Double_t TmpFitErr;
-		Double_t ErrorLimit[4]={1,1,1,1};
+		Double_t ErrorLimit[4]={1,1,1,10};
 		Bool_t FineFit=true;
 		Double_t ErrSquare=0;
 		for(int i=0;i<4;i++){
@@ -377,20 +400,26 @@ void OneRunAnalysis(int run, int scan) {
 		  SiPMAllDataQualPhi[SiPMchNum]=false;	
 		}
       }else if(scan==1){
+		FitFunc[iScalerCh]->SetRange(MPPCXYZ[iScalerCh][2]-50,MPPCXYZ[iScalerCh][2]+50);
+		FitFunc[iScalerCh]->SetParLimits(0,MPPCXYZ[iScalerCh][2]-15,MPPCXYZ[iScalerCh][2]+15);	
+		FitFunc[iScalerCh]->SetParLimits(1,0,15);
+		FitFunc[iScalerCh]->SetParLimits(2,0,25);
+		FitFunc[iScalerCh]->SetParLimits(3,0,80);
 		FitFunc[iScalerCh]->SetParameters(MPPCXYZ[iScalerCh][2],10,18,40);
-		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"NQ");
+		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MNQ");
 		SiPMPosDesign=MPPCXYZ[iScalerCh][2];
 		SiPMAllZPosDesign[SiPMchNum]=MPPCXYZ[iScalerCh][2];
 		Double_t TmpFitErr;
-		Bool_t FineFit=false;
+		Double_t ErrorLimit[4]={1,1,1,10};
+		Bool_t FineFit=true;
 		Double_t ErrSquare=0;
 		for(int i=0;i<4;i++){
 		  TmpFitErr=FitFunc[iScalerCh]->GetParError(i);
-		  ErrSquare+=pow(TmpFitErr,2);
+		  if(TmpFitErr>ErrorLimit[i]){
+			FineFit=false;
+		  }
 		}
-		if(ErrSquare<10){
-		  FineFit=true;
-		}
+
 		if(FineFit==true&&SiPMAllDataQualZ[SiPMchNum]==false){
 		  SiPMAllZPos[SiPMchNum]=FitFunc[iScalerCh]->GetParameter(0);
 		  SiPMAllZPosErr[SiPMchNum]=FitFunc[iScalerCh]->GetParError(0);

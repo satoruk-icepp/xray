@@ -26,7 +26,7 @@ void xray_analysis(){
   TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch.root","READ");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch_dg.root","READ");
   TTree *xrayac = (TTree*)frec->Get("xrayac");
 
   Double_t AllPhiPosGap[nMPPC];

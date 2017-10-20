@@ -14,6 +14,7 @@
 Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */);
 Int_t arraysearch(std::vector<Double_t> array, Double_t value);
 Double_t ArbFunc(Double_t *x,Double_t *par);
+Double_t TwoGaus(Double_t *x,Double_t *par);
 Double_t SiPMZPos[nMPPC];
 Double_t SiPMPhiPos[nMPPC];
 Double_t SiPMZPosErr[nMPPC];
@@ -97,7 +98,6 @@ void RunAnalysis(int run, int scan,int OneCh) {
   gStyle->SetTitleW(2);
   TGraphErrors* grPosition =new TGraphErrors();
   TGraph* grPositionDesign =new TGraph();
-  //beam position
   TGraph* grBeamPosition= new TGraph();
   TGraph* grScaler[kNchforXray];
   TGraph* grScalerABLS[kNchforXray];
@@ -134,10 +134,7 @@ void RunAnalysis(int run, int scan,int OneCh) {
 	BaseGaus[iScalerCh] = new TF1(basefuncname,"[0]*TMath::Gaus(x,[1],[2])");
 
 	//TopGaus[iScalerCh] = new TF1(topfuncname,"[0]*TMath::Gaus(x,[1],[2])");
-	FitFunc[iScalerCh] = new TF1(fitfuncname,ArbFunc,-300,300,4);
-	FitFunc[iScalerCh]->SetParLimits(1,0,15);
-	FitFunc[iScalerCh]->SetParLimits(2,0,25);
-	FitFunc[iScalerCh]->SetParLimits(3,0,80);
+	FitFunc[iScalerCh] = new TF1(fitfuncname,TwoGaus,-300,300,4);
 
   }
 
@@ -230,9 +227,9 @@ void RunAnalysis(int run, int scan,int OneCh) {
   /*Title description*/
   for (Int_t iScalerCh = 0; iScalerCh < kNchforXray; iScalerCh++) {
 	if (!valid[iScalerCh]) {
-	  grScaler[iScalerCh]->SetTitle("No MPPC connected.");
+	  grScalerABLS[iScalerCh]->SetTitle("No MPPC connected.");
 	} else {
-	  grScaler[iScalerCh]->SetTitle(Form("WD: %d, MPPC: %04d (@phi: %2.1lf deg, z: %2.1lf mm)", iScalerCh, MPPCindex[iScalerCh], MPPCPhi[iScalerCh], MPPCXYZ[iScalerCh][2]));
+	  grScalerABLS[iScalerCh]->SetTitle(Form("WD: %d, MPPC: %04d (@phi: %2.1lf deg, z: %2.1lf mm)", iScalerCh, MPPCindex[iScalerCh], MPPCPhi[iScalerCh], MPPCXYZ[iScalerCh][2]));
 	}
   }
   canvas1->Divide(6,6);
@@ -251,12 +248,22 @@ void RunAnalysis(int run, int scan,int OneCh) {
 	  SiPMRow=floor(SiPMchNum/NLine);
 	  SiPMLine=SiPMchNum-NLine*SiPMRow;
 	  if(scan==0){
-		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],1.2,1.5,40);
-		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"NQ");
+		FitFunc[iScalerCh]->SetRange(MPPCPhi[iScalerCh]-15,MPPCPhi[iScalerCh]+15);
+		FitFunc[iScalerCh]->SetParLimits(0,MPPCPhi[iScalerCh]-5,MPPCPhi[iScalerCh]+5);
+		FitFunc[iScalerCh]->SetParLimits(1,0,2);
+		FitFunc[iScalerCh]->SetParLimits(2,0,2);
+		FitFunc[iScalerCh]->SetParLimits(3,0,80);
+		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],0.6,0.1,30);
+		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MN");
 		SiPMPosDesign=MPPCPhi[iScalerCh];
 	  }else if(scan==1){
+		FitFunc[iScalerCh]->SetRange(MPPCXYZ[iScalerCh][2]-50,MPPCXYZ[iScalerCh][2]+50);
+		FitFunc[iScalerCh]->SetParLimits(0,MPPCXYZ[iScalerCh][2]-15,MPPCXYZ[iScalerCh][2]+15);	
+		FitFunc[iScalerCh]->SetParLimits(1,0,15);
+		FitFunc[iScalerCh]->SetParLimits(2,0,25);
+		FitFunc[iScalerCh]->SetParLimits(3,0,80);
 		FitFunc[iScalerCh]->SetParameters(MPPCXYZ[iScalerCh][2],10,10,40);
-		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"NQ");
+		grScalerABLS[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MNQ");
 		SiPMPosDesign=MPPCXYZ[iScalerCh][2];
 	  }
 	  SiPMPos=FitFunc[iScalerCh]->GetParameter(0);
@@ -269,7 +276,7 @@ void RunAnalysis(int run, int scan,int OneCh) {
 	  cnt0+=1;
 	  grPositionDesign->SetPoint(cnt1,SiPMchNum,SiPMPosDesign);
 	  cnt1+=1;
-	  std::cout<<"iScalerCh:  "<<iScalerCh<<"  SiPM channel:  "<<SiPMchNum<<"  Row:  "<<SiPMRow<<"  Column:  "<<SiPMLine<<"  position:  "<<SiPMPos<<"+-"<<SiPMPosErr<<std::endl;
+	  std::cout<<"iScalerCh:  "<<iScalerCh<<"  SiPM channel:  "<<SiPMchNum<<"  Row:  "<<SiPMRow<<"  Column:  "<<SiPMLine<<"  position:  "<<SiPMPos<<"+-"<<SiPMPosErr<<"  Design:  "<<SiPMPosDesign<<std::endl;
 	  tout->Fill();
 	}
   }
@@ -350,23 +357,42 @@ void RunAnalysis(int run, int scan,int OneCh) {
   }
 
 
-  Int_t arraysearch(std::vector<Double_t> array, Double_t value){
-	Bool_t found=false;
-	Int_t sizearr=array.size();
-	int i=-1;
-	if(sizearr!=0){
-	  for (i = 0; i < sizearr; i++) {
-		if (array[i]==value) {
-		  found=true;
-		  break;
-		}
+Int_t arraysearch(std::vector<Double_t> array, Double_t value){
+  Bool_t found=false;
+  Int_t sizearr=array.size();
+  int i=-1;
+  if(sizearr!=0){
+	for (i = 0; i < sizearr; i++) {
+	  if (array[i]==value) {
+		found=true;
+		break;
 	  }
 	}
-	if(found==false){
-	  i=-1;  
-	}
-	return i;
   }
+  if(found==false){
+	i=-1;  
+  }
+  return i;
+}
+
+Double_t TwoGaus(Double_t *x,Double_t *par){
+  Double_t xx=x[0];
+  Double_t mean=par[0];
+  Double_t topwidth=par[1];
+  Double_t meanfg=par[0]-par[1]/2;
+  Double_t meansg=par[0]+par[1]/2;
+  Double_t sigma=par[2];
+  Double_t height=par[3];
+  Double_t f;
+  if(xx<meanfg){
+	f=height*TMath::Gaus(xx,meanfg,sigma,true);
+  }else if(xx>=meanfg&&xx<meansg){
+	f= height*TMath::Gaus(meanfg,meanfg,sigma,true);
+  }else{
+	f= height*TMath::Gaus(xx,meansg,sigma,true);
+  }
+  return f;
+}
 
   Double_t ArbFunc(Double_t *x,Double_t *par){
 	Float_t xx=x[0];
