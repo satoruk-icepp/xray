@@ -14,10 +14,13 @@
 Int_t arraysearch(std::vector<Double_t> array, Double_t value);
 Double_t ArbFunc(Double_t *x,Double_t *par);
 Double_t TwoGaus(Double_t *x,Double_t *par);
+
+
 Double_t SiPMZPos[nMPPC];
 Double_t SiPMPhiPos[nMPPC];
 Double_t SiPMZPosErr[nMPPC];
 Double_t SiPMPhiPosErr[nMPPC];
+Double_t BaseLine[nMPPC];
 
 /*
 Analysis of X-ray meas.
@@ -26,11 +29,12 @@ run : run number
 scan : drection of scan. 0: Phi scan, 1 : Z scan
 */
 
-void UCIRunAnalysis(int run, int scan,int one) {
+void UCIRunAnalysis(int run, Bool_t PhiScan,int one) {
   TCanvas* canvas1 =new TCanvas("canvas1","fitting",900,600);
+  TCanvas* canvas2 =new TCanvas("canvas2","one channel",600,600);
   /*-----Define rec tree to be read----*/
   TFile* frec;
-  if(scan == 0 ){
+  if(PhiScan == true ){
 	frec = new TFile(Form("$(MEG2SYS)/analyzer/x-ray/PhiScan/xray%06d_graphs.root", run),"READ");
   }else{	
 	frec = new TFile(Form("$(MEG2SYS)/analyzer/x-ray/ZScan/xray%06d_graphs.root", run),"READ");
@@ -68,22 +72,22 @@ void UCIRunAnalysis(int run, int scan,int one) {
 	TString fitfuncname;
 	fitfuncname.Form("fit%d",i);
 	FitFunc[i] = new TF1(fitfuncname,TwoGaus,-300,300,5);
-	if(scan==0){
+	if(PhiScan==true){
 	  FitFunc[i]->SetRange(GraphPhiPos-10,GraphPhiPos+10);
 	  FitFunc[i]->SetParameters(GraphPhiPos,0.7,0.2,80,40);
 	  FitFunc[i]->SetParLimits(1,0,2);
 	  FitFunc[i]->SetParLimits(2,0,2);
 	  FitFunc[i]->SetParLimits(3,0,200);
-	  FitFunc[i]->SetParLimits(4,0,100);
-	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
-	}else if(scan==1){
+	  FitFunc[i]->SetParLimits(4,0,200);
+	  grScaler[i]->Fit(Form("fit%d",i),"MN");
+	}else{
 	  FitFunc[i]->SetRange(GraphZPos-30,GraphZPos+30);
 	  FitFunc[i]->SetParameters(GraphZPos,10,10,80,40);
 	  FitFunc[i]->SetParLimits(1,0,15);
 	  FitFunc[i]->SetParLimits(2,0,25);
-	  FitFunc[i]->SetParLimits(3,0,200);
-	  FitFunc[i]->SetParLimits(4,0,100);
-	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
+	  FitFunc[i]->SetParLimits(3,0,5000);
+	  FitFunc[i]->SetParLimits(4,0,200);
+	  grScaler[i]->Fit(Form("fit%d",i),"MN");
 	}
 	Double_t MeasPos = FitFunc[i]->GetParameter(0);
 	Double_t MeasPosErr = FitFunc[i]->GetParError(0);
@@ -97,7 +101,10 @@ void UCIRunAnalysis(int run, int scan,int one) {
 	FitFunc[i]->SetLineColor(kRed);
 	FitFunc[i]->Draw("same");
   }
-
+  canvas2->cd();
+  grScaler[one]->Draw("ap");
+  FitFunc[one]->SetLineColor(kRed);
+  FitFunc[one]->Draw("same");
 
 
   /*

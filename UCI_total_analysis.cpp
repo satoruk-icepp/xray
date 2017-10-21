@@ -12,14 +12,17 @@
 #define NLine 44
 
 void UCIRunAnalysis(int run,Bool_t PhiScan);
+Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan);
 Int_t arraysearch(std::vector<Double_t> array, Double_t value);
 Double_t ArbFunc(Double_t *x,Double_t *par);
 Double_t TwoGaus(Double_t *x,Double_t *par);
 Double_t SiPMZPos[nMPPC];
 Double_t SiPMZPosErr[nMPPC];
+Double_t SiPMZPosDesign[nMPPC];
 Bool_t SiPMZDataQual[nMPPC];
 Double_t SiPMPhiPos[nMPPC];
 Double_t SiPMPhiPosErr[nMPPC];
+Double_t SiPMPhiPosDesign[nMPPC];
 Bool_t SiPMPhiDataQual[nMPPC];
 /*
 Analysis of X-ray meas.
@@ -69,28 +72,28 @@ void UCI_total_analysis(){
   Int_t ChNum;
 
   Double_t OneChPhiPos;
-  //Double_t OneChPhiPosDesign;
+  Double_t OneChPhiPosDesign;
   Double_t OneChPhiPosErr;
   //Double_t OneChPhiPosGap;
-  Bool_t OneChDataQualPhi;
+  Bool_t OneChPhiDataQual;
 
   Double_t OneChZPos;
-  //Double_t OneChZPosDesign;
+  Double_t OneChZPosDesign;
   Double_t OneChZPosErr;
   //Double_t OneChZPosGap;
-  Bool_t OneChDataQualZ;
+  Bool_t OneChZDataQual;
 
   tall->Branch("ChNum",&ChNum);
 
   tall->Branch("PhiPos",&OneChPhiPos);
-  // tall->Branch("PhiPosDesign",&OneChPhiPosDesign);
+  tall->Branch("PhiPosDesign",&OneChPhiPosDesign);
   tall->Branch("PhiPosErr",& OneChPhiPosErr);
-  tall->Branch("DataQualPhi",& OneChDataQualPhi);
+  tall->Branch("PhiDataQual",& OneChPhiDataQual);
 
   tall->Branch("ZPos",&OneChZPos);
-  //tall->Branch("ZPosDesign",&OneChZPosDesign);
+  tall->Branch("ZPosDesign",&OneChZPosDesign);
   tall->Branch("ZPosErr",& OneChZPosErr);
-  tall->Branch("DataQualZ",& OneChDataQualZ);  
+  tall->Branch("ZDataQual",& OneChZDataQual);  
 
   for(int i=0;i<PhiRunNum;i++){
     UCIRunAnalysis(PhiRunList[i],true);
@@ -105,15 +108,15 @@ void UCI_total_analysis(){
 	//Phi Position
     OneChPhiPos=SiPMPhiPos[iCh];
     OneChPhiPosErr=SiPMPhiPosErr[iCh];
-    //OneChPhiPosDesign=SiPMPhiPosDesign[iCh];
-    OneChDataQualPhi=SiPMPhiDataQual[iCh];
+    OneChPhiPosDesign=SiPMPhiPosDesign[iCh];
+    OneChPhiDataQual=SiPMPhiDataQual[iCh];
 	//SiPMAllPhiPosGap[iCh]=OneChPhiPos-OneChPhiPosDesign;
 	//Z Position
 	OneChZPos=SiPMZPos[iCh];
     OneChZPosErr=SiPMZPosErr[iCh];
-	//    OneChZPosDesign=SiPMAllZPosDesign[iCh];
+	OneChZPosDesign=SiPMZPosDesign[iCh];
 	//	OneChZPosGap=OneChZPos-OneChZPosDesign;
-    OneChDataQualZ=SiPMZDataQual[iCh];
+    OneChZDataQual=SiPMZDataQual[iCh];
 	//SiPMAllZPosGap[iCh]=OneChZPos-OneChZPosDesign;
     tall->Fill();
   }
@@ -163,49 +166,54 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	//std::cout<<GraphPhiPos<<std::endl;
 	//std::cout<<Beam<<std::endl;
 	//	sscanf(graphname,"MPPC %d: Z %f mm, Phi %f deg; Beam: %f",&MPPCch,&GraphZPos,&GraphPhiPos,&Beam);
+
+	SiPMPhiPosDesign[MPPCch]=GraphPhiPos;
+	SiPMZPosDesign[MPPCch]=GraphZPos;
 	TString fitfuncname;
 	fitfuncname.Form("fit%d",i);
 	FitFunc[i] = new TF1(fitfuncname,TwoGaus,-300,300,5);
+	Double_t FitErr[5];
 	Double_t MeasPos;
-	Double_t MeasPosErr;
 	Double_t TopWidth;
 	Double_t sigma;
+	Double_t Height;
 	Double_t Baseline;
 	if(PhiScan==true){
 	  FitFunc[i]->SetRange(GraphPhiPos-10,GraphPhiPos+10);
-	  FitFunc[i]->SetParameters(GraphPhiPos,0.7,0.2,80,40);
-	  FitFunc[i]->SetParLimits(1,0,2);
-	  FitFunc[i]->SetParLimits(2,0,2);
-	  FitFunc[i]->SetParLimits(3,0,200);
-	  FitFunc[i]->SetParLimits(4,0,100);
+	  FitFunc[i]->SetParameters(GraphPhiPos,0.7,0.2,80,60);
+	  FitFunc[i]->SetParLimits(1,0,5);
+	  FitFunc[i]->SetParLimits(2,0,5);
+	  FitFunc[i]->SetParLimits(3,0,1000);
+	  FitFunc[i]->SetParLimits(4,0,200);
 	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
-	  
-
-
 	}else{
 	  FitFunc[i]->SetRange(GraphZPos-30,GraphZPos+30);
-	  FitFunc[i]->SetParameters(GraphZPos,10,10,80,40);
+	  FitFunc[i]->SetParameters(GraphZPos,10,2,500,40);
 	  FitFunc[i]->SetParLimits(1,0,15);
 	  FitFunc[i]->SetParLimits(2,0,25);
-	  FitFunc[i]->SetParLimits(3,0,200);
-	  FitFunc[i]->SetParLimits(4,0,100);
+	  FitFunc[i]->SetParLimits(3,0,5000);
+	  FitFunc[i]->SetParLimits(4,0,200);
 	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
 	}
 	
 	MeasPos = FitFunc[i]->GetParameter(0);
-	MeasPosErr = FitFunc[i]->GetParError(0);
 	TopWidth = FitFunc[i]->GetParameter(1);
 	sigma = FitFunc[i]->GetParameter(2);
+	Height = FitFunc[i]->GetParameter(3);
 	Baseline = FitFunc[i]->GetParameter(4);
+
+	for(int j=0;j<5;j++){
+	  FitErr[j] = FitFunc[i]->GetParError(j);
+	}
 
 	if(PhiScan==true){
 	  SiPMPhiPos[MPPCch]=MeasPos;
-	  SiPMPhiPosErr[MPPCch]=MeasPosErr;
-	  SiPMPhiDataQual[MPPCch]=true;
+	  SiPMPhiPosErr[MPPCch]=FitErr[0];
+	  SiPMPhiDataQual[MPPCch]=DataQual(FitErr,PhiScan);
 	}else{
 	  SiPMZPos[MPPCch]=MeasPos;
-	  SiPMZPosErr[MPPCch]=MeasPosErr;
-	  SiPMZDataQual[MPPCch]=true;
+	  SiPMZPosErr[MPPCch]=FitErr[0];
+	  SiPMZDataQual[MPPCch]=DataQual(FitErr,PhiScan);
 	}
 
 	//std::cout<< "Position:  "<<MeasPos<<"+-"<<MeasPosErr<<std::endl;
@@ -261,6 +269,28 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	}
 	return i;
   }
+
+Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan){
+  Bool_t Quality=true;
+  Double_t PhiErrMax[5]={0.1,0.1,0.1,5,1};
+  Double_t ZErrMax[5]={1,1,1,50,1};
+  if(PhiScan==true){
+	for(int i=0;i<5;i++){
+	  if(FitErr[i]>PhiErrMax[i]){
+		Quality=false;
+		break;
+	  }
+	}
+  }else{
+	for(int i=0;i<5;i++){
+	  if(FitErr[i]>ZErrMax[i]){
+		Quality=false;
+		break;
+	  }
+	}
+  }
+  return Quality;
+}
 
 Double_t TwoGaus(Double_t *x,Double_t *par){
   Double_t xx=x[0];
