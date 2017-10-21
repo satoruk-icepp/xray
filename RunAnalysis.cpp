@@ -134,7 +134,7 @@ void RunAnalysis(int run, int scan,int OneCh) {
 	BaseGaus[iScalerCh] = new TF1(basefuncname,"[0]*TMath::Gaus(x,[1],[2])");
 
 	//TopGaus[iScalerCh] = new TF1(topfuncname,"[0]*TMath::Gaus(x,[1],[2])");
-	FitFunc[iScalerCh] = new TF1(fitfuncname,TwoGaus,-300,300,4);
+	FitFunc[iScalerCh] = new TF1(fitfuncname,ArbFunc,-300,300,4);
 
   }
 

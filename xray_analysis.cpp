@@ -36,7 +36,9 @@ void xray_analysis(){
 
   TGraph* grChZPos=new TGraph();
   TGraph* grGapCor=new TGraph();
-  TH1D* WidthHist=new TH1D("gap","Distance from the next MPPC;Distance[mm];Channels",100,0,20);
+  TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",400,0,20);
+  WidthHist->SetStats(0); //非表示
+
 
   /*Define CFRP*/
   Int_t CFRPOrigin[5]={0,24,47,70,93};
@@ -109,13 +111,20 @@ void xray_analysis(){
 	  AllPhiPosGap[iCh]=-100;
 	}
 	if(DataQualZ==true&&std::abs(ZPos)<120){
-	
-	  if(former==true&&iCh%44!=22){
+	  if(former==true){
 		WidthHist->Fill((ZPos-tmpzpos)/cos(theta));
 		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
-		tmpzpos=ZPos;
+		if((ZPos-tmpzpos)/cos(theta)>17.0){
+		  std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
+		}
+
 	  }
-	  former=true;
+	  if(iCh%44!=21){
+		former=true;
+	  }else{
+		former=false;
+	  }
+	  tmpzpos=ZPos;
 	  AllZPosGap[iCh]=ZPos-ZPosRealDesign;
 	  AllZPosErr[iCh]=ZPosErr;
 	  grChZPos->SetPoint(iCh,ChNum,ZPos-ZPosRealDesign);
@@ -126,6 +135,7 @@ void xray_analysis(){
 	grGapCor->SetPoint(iCh,AllZPosGap[iCh],AllPhiPosGap[iCh]);
 
   }
+
 
   canvas1->cd();
   TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
@@ -146,7 +156,9 @@ void xray_analysis(){
   grGapCor->SetMaximum(10);
   grGapCor->Draw("ap");
   canvas5->cd();
+  canvas5->SetGrid(0,0);
   gStyle->SetFuncColor(kRed);
+
   WidthHist->Fit("gaus");
   WidthHist->Draw();
 }
