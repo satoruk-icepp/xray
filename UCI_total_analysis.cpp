@@ -99,8 +99,6 @@ void UCI_total_analysis(){
   Double_t OneChZSigmaErr;
   Double_t OneChZHeightErr;
   Double_t OneChZBaseLineErr;
-
-  //Double_t OneChZPosGap;
   Bool_t OneChZDataQual;
 
   tall->Branch("ChNum",&ChNum);
@@ -113,8 +111,6 @@ void UCI_total_analysis(){
   tall->Branch("PhiSigmaErr",& OneChPhiSigmaErr);
   tall->Branch("PhiHeightErr",& OneChPhiHeightErr);
   tall->Branch("PhiBaseLineErr",& OneChPhiBaseLineErr);
-
-
 
   tall->Branch("ZPos",&OneChZPos);
   tall->Branch("ZPosDesign",&OneChZPosDesign);
@@ -146,14 +142,11 @@ void UCI_total_analysis(){
     OneChPhiSigmaErr=SiPMPhiSigmaErr[iCh];
     OneChPhiHeightErr=SiPMPhiHeightErr[iCh];
     OneChPhiBaseLineErr=SiPMPhiBaseLineErr[iCh];
-	//SiPMAllPhiPosGap[iCh]=OneChPhiPos-OneChPhiPosDesign;
+
 	//Z Position
 	OneChZPos=SiPMZPos[iCh];
-
 	OneChZPosDesign=SiPMZPosDesign[iCh];
-	//	OneChZPosGap=OneChZPos-OneChZPosDesign;
     OneChZDataQual=SiPMZDataQual[iCh];
-	//SiPMAllZPosGap[iCh]=OneChZPos-OneChZPosDesign;
     OneChZPosErr=SiPMZPosErr[iCh];
     OneChZTopWidthErr=SiPMZTopWidthErr[iCh];
     OneChZSigmaErr=SiPMZSigmaErr[iCh];
@@ -169,7 +162,7 @@ void UCI_total_analysis(){
 }
 
 void UCIRunAnalysis(int run, Bool_t PhiScan) {
-  // TCanvas* canvas1 =new TCanvas("canvas1","fitting",900,600);
+
   /*-----Define rec tree to be read----*/
   TFile* frec;
   if(PhiScan == true ){
@@ -180,15 +173,12 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 
   std::cout<<"Read rec "<<run<<std::endl;
 
-  // canvas1->Divide(6,6);
   TF1* FitFunc[32];
   TGraphErrors* grScaler[32];
   for(int i=0;i<32;i++){
 	grScaler[i]=(TGraphErrors*)frec->Get(Form("mppc%d",i));
 	TString graphname=grScaler[i]->GetTitle();
 	stringstream ss;
-	//char graphname[64]=grScaler[i]->GetTitle();
-	//	std::cout<<graphname<<std::endl;
 	Int_t MPPCch;
 	Double_t GraphZPos;
 	Double_t GraphPhiPos;
@@ -202,11 +192,6 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	ss >> GraphPhiPos;
 	ss.ignore(12);
 	ss >> Beam;
-	//std::cout<<MPPCch<<std::endl;
-	//std::cout<<GraphZPos<<std::endl;
-	//std::cout<<GraphPhiPos<<std::endl;
-	//std::cout<<Beam<<std::endl;
-	//	sscanf(graphname,"MPPC %d: Z %f mm, Phi %f deg; Beam: %f",&MPPCch,&GraphZPos,&GraphPhiPos,&Beam);
 
 	SiPMPhiPosDesign[MPPCch]=GraphPhiPos;
 	SiPMZPosDesign[MPPCch]=GraphZPos;
@@ -266,34 +251,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	  SiPMZHeightErr[MPPCch]=FitErr[3];
 	  SiPMZBaseLineErr[MPPCch]=FitErr[4];
 	}
-
-	//std::cout<< "Position:  "<<MeasPos<<"+-"<<MeasPosErr<<std::endl;
-	//std::cout<< "Top Width:  "<< TopWidth <<"  sigma:  "<<sigma<<"  Baseline:  "<<Baseline<<std::endl;
-	//canvas1->cd(i+1);
-	//grScaler[i]->Draw("ap");
-	//FitFunc[i]->SetLineColor(kRed);
-	//FitFunc[i]->Draw("same");
   }
-
-
-
-  /*
-	canvas3->cd();
-	grPosition->SetTitle("Z Position Measurement;SiPM Channel;Z Position[mm]");
-	grPosition->SetMarkerStyle(22);
-	grPosition->  SetMarkerColor(2);
-	grPosition->Draw("AP");
-	grPositionDesign->SetMarkerStyle(22);
-	grPositionDesign->Draw("p");
-	canvas4->cd();
-	grScalerABLS[OneCh]->SetTitle("X-ray Signal;Phi Position[deg];Trigger Rate(Back ground Subtracted)[Hz]");
-	grScalerABLS[OneCh]->Draw("apl");
-	FitFunc[OneCh]->SetLineColor(2);
-	FitFunc[OneCh]->Draw("same");
-	grScalerResidual[OneCh]->Draw("same");
-	fout->cd();
-	tout->Write();
-	fout->Close();*/
   return;
 }
 
