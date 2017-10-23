@@ -11,6 +11,10 @@
 #define NRow 93
 #define NLine 44
 
+Double_t ZPosGapAllch[nMPPC];
+Double_t PhiPosGapAllch[nMPPC];
+
+
 void InnerGeometry(Double_t PropertyAllSiPM[nMPPC],Double_t Min, Double_t Max);
 int colordtm(Double_t value,Double_t vmin, Double_t vmax);
 
@@ -32,7 +36,7 @@ void UCI_makeplots(){
 
   /*Define CFRP*/
   Int_t CFRPOrigin[5]={0,24,47,70,93};
-  Double_t CFRPGap[4]={0,0.9,3.1,4.7};
+  Double_t CFRPGap[4]={0,0.6,2.1,3.7};
 
 
   Int_t ChNum;
@@ -51,10 +55,12 @@ void UCI_makeplots(){
   xrayac->SetBranchAddress("PhiPos",&PhiPos);
   xrayac->SetBranchAddress("PhiPosErr",&PhiPosErr);
   xrayac->SetBranchAddress("PhiDataQual",&PhiDataQual);
+  xrayac->SetBranchAddress("PhiPosDesign",&PhiPosDesign);
 
   xrayac->SetBranchAddress("ZPos",&ZPos);
   xrayac->SetBranchAddress("ZPosErr",&ZPosErr);
   xrayac->SetBranchAddress("ZDataQual",&ZDataQual);
+  xrayac->SetBranchAddress("ZPosDesign",&ZPosDesign);
 
   Int_t N=xrayac->GetEntries();
   std::cout<<"All channels: "<<N<<std::endl;
@@ -87,12 +93,12 @@ void UCI_makeplots(){
 		break;*/
 	  }
 	}
-	/*if(DataQualPhi==true){
-	  AllPhiPosGap[iCh]=PhiPos-PhiPosRealDesign;
-	  AllPhiPosErr[iCh]=PhiPosErr;
+	if(PhiDataQual==true){
+	  PhiPosGapAllch[iCh]=PhiPos-PhiPosDesign;
+	  //AllPhiPosErr[iCh]=PhiPosErr;
 	}else{
-	  AllPhiPosGap[iCh]=-100;
-	}*/
+	  PhiPosGapAllch[iCh]=-100;
+	}
 	if(ZDataQual==true&&std::abs(ZPos)<120){
 	  if(former==true){
 		WidthHist->Fill((ZPos-tmpzpos)/cos(theta));
@@ -108,32 +114,34 @@ void UCI_makeplots(){
 		former=false;
 	  }
 	  tmpzpos=ZPos;
-	  //AllZPosGap[iCh]=ZPos-ZPosRealDesign;
+	  ZPosGapAllch[iCh]=ZPos-ZPosDesign;
 	  //AllZPosErr[iCh]=ZPosErr;
-	  //grChZPos->SetPoint(iCh,ChNum,ZPos-ZPosRealDesign);
+	  grChZPos->SetPoint(iCh,ChNum,ZPos-ZPosDesign);
 	}else{
-	  //AllZPosGap[iCh]=-100;
+	  ZPosGapAllch[iCh]=-100;
 	  former=false;
 	}
 	//grGapCor->SetPoint(iCh,AllZPosGap[iCh],AllPhiPosGap[iCh]);
 
   }
-  /*
+
 
   canvas1->cd();
   TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
   ptPhi->AddText("Gap between Designed Value in the Phi Direction");
   ptPhi->Draw();
-  InnerGeometry(AllPhiPosGap,-0.5,0.5);
+  InnerGeometry(PhiPosGapAllch,-0.5,0.5);
+  
   canvas2->cd();
   TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
   ptZ->AddText("Gap between Designed Value in the Z Direction");
   ptZ->Draw();
-  InnerGeometry(AllZPosGap,-7.0,1.0);
+  InnerGeometry(ZPosGapAllch,-10.0,0.0);
+  
   canvas3->cd();
   grChZPos->SetTitle("Gap from the design value;channel;Gap[mm]");
   grChZPos->Draw("ap");
-  canvas4->cd();
+  /*canvas4->cd();
   grGapCor->GetXaxis()->SetLimits(-10,10);
   grGapCor->SetMinimum(-10);
   grGapCor->SetMaximum(10);
@@ -195,51 +203,53 @@ Int_t arraysearch(std::vector<Double_t> array, Double_t value){
 	return f;
   }
 
-  void InnerGeometry(Double_t PropertyAllSiPM[nMPPC],Double_t Min,Double_t Max){
+void InnerGeometry(Double_t PropertyAllSiPM[nMPPC],Double_t Min,Double_t Max){
 
-	Double_t CenterBoxWidth=0.8;
-	Double_t CenterBoxHeight=0.8;
-	Double_t CenterBoxOriginX=0.85;
-	Double_t CenterBoxOriginY=(1+CenterBoxHeight)/2;
-	Double_t SiPMBoxWidth=CenterBoxWidth/NLine;
-	Double_t SiPMBoxHeight=CenterBoxHeight/NRow;
-	for(int i = 0; i<NRow; i++){
-	  for(int j = 0; j<NLine; j++){
-		Double_t OneBoxXmax=CenterBoxOriginX-j*SiPMBoxWidth;
-		Double_t OneBoxYmax=CenterBoxOriginY-i*SiPMBoxHeight;
-		Double_t OneBoxXmin=OneBoxXmax-SiPMBoxWidth;
-		Double_t OneBoxYmin=OneBoxYmax-SiPMBoxHeight;
-		TBox *b= new TBox(OneBoxXmin,OneBoxYmin,OneBoxXmax,OneBoxYmax);
-		//TString chnum;
-		//chnum.Form("%d",i*NRow+j);
-		//TText *t=new TText(OneBoxXmin,OneBoxYmin,chnum);
-		Int_t Color=colordtm(PropertyAllSiPM[i*NLine+j],Min,Max);
-		b->SetFillColor(Color);
-		b->Draw();
-		//t->Draw();
-	  }
-	}
-
-	Double_t CBHeight=0.8;
-	Double_t CBWidth=0.05;
-	Double_t CBOriginX=0.95;
-	Double_t CBOriginY=0.1;
-	Int_t Ncolor=100;
-	Double_t OneCBHeight=CBHeight/Ncolor;
-	for(int i=0;i<Ncolor;i++){
-	  TBox *b= new TBox(CBOriginX,CBOriginY+i*OneCBHeight,CBOriginX+CBWidth,CBOriginY+(i+1)*OneCBHeight);
-	  Int_t CBColor=colordtm(i,0,100);
-	  b->SetFillColor(CBColor);
+  Double_t CenterBoxWidth=0.8;
+  Double_t CenterBoxHeight=0.8;
+  Double_t CenterBoxOriginX=0.85;
+  Double_t CenterBoxOriginY=(1+CenterBoxHeight)/2;
+  Double_t SiPMBoxWidth=CenterBoxWidth/NLine;
+  Double_t SiPMBoxHeight=CenterBoxHeight/NRow;
+  for(int i = 0; i<NRow; i++){
+	for(int j = 0; j<NLine; j++){
+	  Double_t OneBoxXmax=CenterBoxOriginX-j*SiPMBoxWidth;
+	  Double_t OneBoxYmax=CenterBoxOriginY-i*SiPMBoxHeight;
+	  Double_t OneBoxXmin=OneBoxXmax-SiPMBoxWidth;
+	  Double_t OneBoxYmin=OneBoxYmax-SiPMBoxHeight;
+	  TBox *b= new TBox(OneBoxXmin,OneBoxYmin,OneBoxXmax,OneBoxYmax);
+	  //TString chnum;
+	  //chnum.Form("%d",i*NRow+j);
+	  //TText *t=new TText(OneBoxXmin,OneBoxYmin,chnum);
+	  Int_t Color=colordtm(PropertyAllSiPM[i*NLine+j],Min,Max);
+	  b->SetFillColor(Color);
 	  b->Draw();
+	  //t->Draw();
 	}
-	TString MinNum,MaxNum;
-	MinNum.Form("%f",Min);
-	MaxNum.Form("%f",Max);
-	TText *MinText=new TText(0.9,0.05,MinNum);
-	TText *MaxText=new TText(0.9,0.9,MaxNum);
-	MinText->Draw();
-	MaxText->Draw();
   }
+
+  Double_t CBHeight=0.8;
+  Double_t CBWidth=0.05;
+  Double_t CBOriginX=0.95;
+  Double_t CBOriginY=0.1;
+  Int_t Ncolor=100;
+  Double_t OneCBHeight=CBHeight/Ncolor;
+  for(int i=0;i<Ncolor;i++){
+	TBox *b= new TBox(CBOriginX,CBOriginY+i*OneCBHeight,CBOriginX+CBWidth,CBOriginY+(i+1)*OneCBHeight);
+	Int_t CBColor=colordtm(i,0,100);
+	b->SetFillColor(CBColor);
+	b->Draw();
+  }
+  TString MinNum,MaxNum;
+  MinNum.Form("%f",Min);
+  MaxNum.Form("%f",Max);
+  TText *MinText=new TText(0.9,0.05,Form("%.2lf [mm/deg]",Min));
+  TText *MaxText=new TText(0.9,0.9,Form("%.2lf [mm/deg]",Max));
+  MinText->SetTextSize(0.02);
+  MaxText->SetTextSize(0.02);
+  MinText->Draw();
+  MaxText->Draw();
+}
 
 
   int colordtm(Double_t value,Double_t vmin, Double_t vmax){

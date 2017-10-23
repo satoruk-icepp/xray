@@ -12,18 +12,29 @@
 #define NLine 44
 
 void UCIRunAnalysis(int run,Bool_t PhiScan);
-Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan);
+Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design);
 Int_t arraysearch(std::vector<Double_t> array, Double_t value);
 Double_t ArbFunc(Double_t *x,Double_t *par);
 Double_t TwoGaus(Double_t *x,Double_t *par);
 Double_t SiPMZPos[nMPPC];
-Double_t SiPMZPosErr[nMPPC];
 Double_t SiPMZPosDesign[nMPPC];
 Bool_t SiPMZDataQual[nMPPC];
+Double_t SiPMZPosErr[nMPPC];
+Double_t SiPMZHeightErr[nMPPC];
+Double_t SiPMZTopWidthErr[nMPPC];
+Double_t SiPMZSigmaErr[nMPPC];
+Double_t SiPMZBaseLineErr[nMPPC];
+
 Double_t SiPMPhiPos[nMPPC];
-Double_t SiPMPhiPosErr[nMPPC];
 Double_t SiPMPhiPosDesign[nMPPC];
 Bool_t SiPMPhiDataQual[nMPPC];
+Double_t SiPMPhiPosErr[nMPPC];
+Double_t SiPMPhiTopWidthErr[nMPPC];
+Double_t SiPMPhiSigmaErr[nMPPC];
+Double_t SiPMPhiHeightErr[nMPPC];
+Double_t SiPMPhiBaseLineErr[nMPPC];
+
+
 /*
 Analysis of X-ray meas.
 xra_ana(Int_t run, Int_t scan)
@@ -73,13 +84,22 @@ void UCI_total_analysis(){
 
   Double_t OneChPhiPos;
   Double_t OneChPhiPosDesign;
-  Double_t OneChPhiPosErr;
-  //Double_t OneChPhiPosGap;
   Bool_t OneChPhiDataQual;
+  Double_t OneChPhiPosErr;
+  Double_t OneChPhiTopWidthErr;
+  Double_t OneChPhiSigmaErr;
+  Double_t OneChPhiHeightErr;
+  Double_t OneChPhiBaseLineErr;
+
 
   Double_t OneChZPos;
   Double_t OneChZPosDesign;
   Double_t OneChZPosErr;
+  Double_t OneChZTopWidthErr;
+  Double_t OneChZSigmaErr;
+  Double_t OneChZHeightErr;
+  Double_t OneChZBaseLineErr;
+
   //Double_t OneChZPosGap;
   Bool_t OneChZDataQual;
 
@@ -87,13 +107,25 @@ void UCI_total_analysis(){
 
   tall->Branch("PhiPos",&OneChPhiPos);
   tall->Branch("PhiPosDesign",&OneChPhiPosDesign);
-  tall->Branch("PhiPosErr",& OneChPhiPosErr);
   tall->Branch("PhiDataQual",& OneChPhiDataQual);
+  tall->Branch("PhiPosErr",& OneChPhiPosErr);
+  tall->Branch("PhiTopWidthErr",& OneChPhiTopWidthErr);
+  tall->Branch("PhiSigmaErr",& OneChPhiSigmaErr);
+  tall->Branch("PhiHeightErr",& OneChPhiHeightErr);
+  tall->Branch("PhiBaseLineErr",& OneChPhiBaseLineErr);
+
+
 
   tall->Branch("ZPos",&OneChZPos);
   tall->Branch("ZPosDesign",&OneChZPosDesign);
-  tall->Branch("ZPosErr",& OneChZPosErr);
   tall->Branch("ZDataQual",& OneChZDataQual);  
+  tall->Branch("ZPosErr",& OneChZPosErr);
+  tall->Branch("ZTopWidthErr",& OneChZTopWidthErr);
+  tall->Branch("ZSigmaErr",& OneChZSigmaErr);
+  tall->Branch("ZHeightErr",& OneChZHeightErr);
+  tall->Branch("ZBaseLineErr",& OneChZBaseLineErr);
+
+
 
   for(int i=0;i<PhiRunNum;i++){
     UCIRunAnalysis(PhiRunList[i],true);
@@ -110,14 +142,23 @@ void UCI_total_analysis(){
     OneChPhiPosErr=SiPMPhiPosErr[iCh];
     OneChPhiPosDesign=SiPMPhiPosDesign[iCh];
     OneChPhiDataQual=SiPMPhiDataQual[iCh];
+    OneChPhiTopWidthErr=SiPMPhiTopWidthErr[iCh];
+    OneChPhiSigmaErr=SiPMPhiSigmaErr[iCh];
+    OneChPhiHeightErr=SiPMPhiHeightErr[iCh];
+    OneChPhiBaseLineErr=SiPMPhiBaseLineErr[iCh];
 	//SiPMAllPhiPosGap[iCh]=OneChPhiPos-OneChPhiPosDesign;
 	//Z Position
 	OneChZPos=SiPMZPos[iCh];
-    OneChZPosErr=SiPMZPosErr[iCh];
+
 	OneChZPosDesign=SiPMZPosDesign[iCh];
 	//	OneChZPosGap=OneChZPos-OneChZPosDesign;
     OneChZDataQual=SiPMZDataQual[iCh];
 	//SiPMAllZPosGap[iCh]=OneChZPos-OneChZPosDesign;
+    OneChZPosErr=SiPMZPosErr[iCh];
+    OneChZTopWidthErr=SiPMZTopWidthErr[iCh];
+    OneChZSigmaErr=SiPMZSigmaErr[iCh];
+    OneChZHeightErr=SiPMZHeightErr[iCh];
+    OneChZBaseLineErr=SiPMZBaseLineErr[iCh];
     tall->Fill();
   }
   fall->cd();
@@ -187,8 +228,9 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	  FitFunc[i]->SetParLimits(4,0,200);
 	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
 	}else{
-	  FitFunc[i]->SetRange(GraphZPos-30,GraphZPos+30);
+	  FitFunc[i]->SetRange(GraphZPos-80,GraphZPos+80);
 	  FitFunc[i]->SetParameters(GraphZPos,10,2,500,40);
+	  FitFunc[i]->SetParLimits(0,GraphZPos-80,GraphZPos+80);
 	  FitFunc[i]->SetParLimits(1,0,15);
 	  FitFunc[i]->SetParLimits(2,0,25);
 	  FitFunc[i]->SetParLimits(3,0,5000);
@@ -208,12 +250,21 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 
 	if(PhiScan==true){
 	  SiPMPhiPos[MPPCch]=MeasPos;
+	  SiPMPhiDataQual[MPPCch]=DataQual(FitErr,PhiScan,MeasPos,GraphPhiPos);
 	  SiPMPhiPosErr[MPPCch]=FitErr[0];
-	  SiPMPhiDataQual[MPPCch]=DataQual(FitErr,PhiScan);
+	  SiPMPhiTopWidthErr[MPPCch]=FitErr[1];
+	  SiPMPhiSigmaErr[MPPCch]=FitErr[2];
+	  SiPMPhiHeightErr[MPPCch]=FitErr[3];
+	  SiPMPhiBaseLineErr[MPPCch]=FitErr[4];
+
 	}else{
-	  SiPMZPos[MPPCch]=MeasPos;
+	  SiPMZPos[MPPCch]=MeasPos;	 
+	  SiPMZDataQual[MPPCch]=DataQual(FitErr,PhiScan,MeasPos,GraphZPos);
 	  SiPMZPosErr[MPPCch]=FitErr[0];
-	  SiPMZDataQual[MPPCch]=DataQual(FitErr,PhiScan);
+	  SiPMZTopWidthErr[MPPCch]=FitErr[1];
+	  SiPMZSigmaErr[MPPCch]=FitErr[2];
+	  SiPMZHeightErr[MPPCch]=FitErr[3];
+	  SiPMZBaseLineErr[MPPCch]=FitErr[4];
 	}
 
 	//std::cout<< "Position:  "<<MeasPos<<"+-"<<MeasPosErr<<std::endl;
@@ -270,15 +321,21 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	return i;
   }
 
-Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan){
+Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design){
   Bool_t Quality=true;
-  Double_t PhiErrMax[5]={0.1,0.1,0.1,5,1};
-  Double_t ZErrMax[5]={1,1,1,50,1};
+  Double_t PhiErrMax[5]={0.1,0.5,0.2,8,0.5};
+  Double_t ZErrMax[5]={0.5,2,1,100,0.5};
+  Double_t Gap=std::abs(Position-Design);
+  Double_t PhiGapMax=1;
+  Double_t ZGapMax=20;
   if(PhiScan==true){
 	for(int i=0;i<5;i++){
 	  if(FitErr[i]>PhiErrMax[i]){
 		Quality=false;
 		break;
+	  }
+	  if(Gap>PhiGapMax){
+		Quality=false;
 	  }
 	}
   }else{
@@ -287,6 +344,9 @@ Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan){
 		Quality=false;
 		break;
 	  }
+	}
+	if(Gap>ZGapMax){
+	  Quality=false;	  
 	}
   }
   return Quality;

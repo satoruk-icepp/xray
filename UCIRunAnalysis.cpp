@@ -79,15 +79,16 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,int one) {
 	  FitFunc[i]->SetParLimits(2,0,2);
 	  FitFunc[i]->SetParLimits(3,0,200);
 	  FitFunc[i]->SetParLimits(4,0,200);
-	  grScaler[i]->Fit(Form("fit%d",i),"MN");
+	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
 	}else{
-	  FitFunc[i]->SetRange(GraphZPos-30,GraphZPos+30);
-	  FitFunc[i]->SetParameters(GraphZPos,10,10,80,40);
+	  FitFunc[i]->SetRange(GraphZPos-80,GraphZPos+80);
+	  FitFunc[i]->SetParameters(GraphZPos,10,2,500,40);
+	  FitFunc[i]->SetParLimits(0,GraphZPos-80,GraphZPos+80);
 	  FitFunc[i]->SetParLimits(1,0,15);
 	  FitFunc[i]->SetParLimits(2,0,25);
 	  FitFunc[i]->SetParLimits(3,0,5000);
 	  FitFunc[i]->SetParLimits(4,0,200);
-	  grScaler[i]->Fit(Form("fit%d",i),"MN");
+	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
 	}
 	Double_t MeasPos = FitFunc[i]->GetParameter(0);
 	Double_t MeasPosErr = FitFunc[i]->GetParError(0);
@@ -97,6 +98,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,int one) {
 	std::cout<< "Position:  "<<MeasPos<<"+-"<<MeasPosErr<<std::endl;
 	std::cout<< "Top Width:  "<< TopWidth <<"  sigma:  "<<sigma<<"  Baseline:  "<<Baseline<<std::endl;
 	canvas1->cd(i+1);
+	//	grScaler[i]->GetXaxis()->SetLimits(MeasPos-30,MeasPos+30);
 	grScaler[i]->Draw("ap");
 	FitFunc[i]->SetLineColor(kRed);
 	FitFunc[i]->Draw("same");
