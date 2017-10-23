@@ -173,9 +173,9 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
   /*-----Define rec tree to be read----*/
   TFile* frec;
   if(PhiScan == true ){
-	frec = new TFile(Form("$(MEG2SYS)/analyzer/x-ray/PhiScan/xray%06d_graphs.root", run),"READ");
+	frec = new TFile(Form("$(MEG2SYS)/analyzer/x-ray/UCIdata/PhiScan/xray%06d_graphs.root", run),"READ");
   }else{	
-	frec = new TFile(Form("$(MEG2SYS)/analyzer/x-ray/ZScan/xray%06d_graphs.root", run),"READ");
+	frec = new TFile(Form("$(MEG2SYS)/analyzer/x-ray/UCIdata/ZScan/xray%06d_graphs.root", run),"READ");
   }
 
   std::cout<<"Read rec "<<run<<std::endl;
