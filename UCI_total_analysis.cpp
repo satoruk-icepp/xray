@@ -77,7 +77,7 @@ Int_t PhiRunNum=sizeof(PhiRunList)/sizeof(PhiRunList[0]);
 Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 
 void UCI_total_analysis(){
-  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch.root","RECREATE");
+  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_DK.root","RECREATE");
   TTree *tall =new TTree("uci","uci");
 
   Int_t ChNum;
@@ -90,7 +90,6 @@ void UCI_total_analysis(){
   Double_t OneChPhiSigmaErr;
   Double_t OneChPhiHeightErr;
   Double_t OneChPhiBaseLineErr;
-
 
   Double_t OneChZPos;
   Double_t OneChZPosDesign;
@@ -120,8 +119,6 @@ void UCI_total_analysis(){
   tall->Branch("ZSigmaErr",& OneChZSigmaErr);
   tall->Branch("ZHeightErr",& OneChZHeightErr);
   tall->Branch("ZBaseLineErr",& OneChZBaseLineErr);
-
-
 
   for(int i=0;i<PhiRunNum;i++){
     UCIRunAnalysis(PhiRunList[i],true);
@@ -158,7 +155,6 @@ void UCI_total_analysis(){
   tall->Write();
   fall->Close();
   return;
-
 }
 
 void UCIRunAnalysis(int run, Bool_t PhiScan) {
@@ -197,7 +193,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	SiPMZPosDesign[MPPCch]=GraphZPos;
 	TString fitfuncname;
 	fitfuncname.Form("fit%d",i);
-	FitFunc[i] = new TF1(fitfuncname,TwoGaus,-300,300,5);
+	FitFunc[i] = new TF1(fitfuncname,ArbFunc,-300,300,5);
 	Double_t FitErr[5];
 	Double_t MeasPos;
 	Double_t TopWidth;
@@ -206,20 +202,22 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	Double_t Baseline;
 	if(PhiScan==true){
 	  FitFunc[i]->SetRange(GraphPhiPos-10,GraphPhiPos+10);
+	  //FitFunc[i]->SetParameters(GraphPhiPos,0.7,0.2,80,60);
 	  FitFunc[i]->SetParameters(GraphPhiPos,0.7,0.2,80,60);
 	  FitFunc[i]->SetParLimits(1,0,5);
 	  FitFunc[i]->SetParLimits(2,0,5);
 	  FitFunc[i]->SetParLimits(3,0,1000);
-	  FitFunc[i]->SetParLimits(4,0,200);
+	  FitFunc[i]->SetParLimits(4,0,200);//isosceles
 	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
 	}else{
 	  FitFunc[i]->SetRange(GraphZPos-80,GraphZPos+80);
-	  FitFunc[i]->SetParameters(GraphZPos,10,2,500,40);
+	  //FitFunc[i]->SetParameters(GraphZPos,10,2,500,40);
+	  FitFunc[i]->SetParameters(GraphZPos,10,2,80,40);
 	  FitFunc[i]->SetParLimits(0,GraphZPos-80,GraphZPos+80);
 	  FitFunc[i]->SetParLimits(1,0,15);
 	  FitFunc[i]->SetParLimits(2,0,25);
 	  FitFunc[i]->SetParLimits(3,0,5000);
-	  FitFunc[i]->SetParLimits(4,0,200);
+	  FitFunc[i]->SetParLimits(4,0,200);//TwoGaus
 	  grScaler[i]->Fit(Form("fit%d",i),"MNQ");
 	}
 	
@@ -254,9 +252,6 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
   }
   return;
 }
-
-
-
 
   //________________________________________________________________________________
 
@@ -330,30 +325,31 @@ Double_t TwoGaus(Double_t *x,Double_t *par){
   return f;
 }
 
-  Double_t ArbFunc(Double_t *x,Double_t *par){
-	Float_t xx=x[0];
-	//Double_t f = par[0]/sqrt(2*TMath::Pi()*par[1])*TMath::Exp(-pow(xx-par[2],2)/(2*par[1]));
-	//par[0]:mean
-	//par[1]:topwidth
-	//par[2]:zerowidth-topwidth
-	//par[3]:height
-	Double_t topstart=par[0]-par[1]/2;
-	Double_t topend=par[0]+par[1]/2;
-	Double_t redge=topstart-par[2]/2;
-	Double_t fedge=topend+par[2]/2;
-	Double_t height=par[3];
-	Double_t f;
-	if(xx<redge||xx>=fedge){
-	  f=0;
-	}else if(xx>=redge&&xx<topstart){
-	  Double_t ratio=std::abs((xx-redge)/(topstart-redge));
-	  f= height*ratio;
-	}else if(xx>=topstart&&xx<topend){
-	  f=height;  
-	}else{
-	  Double_t ratio=std::abs((xx-topend)/(fedge-topend));
-	  f=height*(1-ratio);
-	}
-	return f;
+Double_t ArbFunc(Double_t *x,Double_t *par){
+  Float_t xx=x[0];
+  //Double_t f = par[0]/sqrt(2*TMath::Pi()*par[1])*TMath::Exp(-pow(xx-par[2],2)/(2*par[1]));
+  //par[0]:mean
+  //par[1]:topwidth
+  //par[2]:zerowidth-topwidth
+  //par[3]:height
+  Double_t topstart=par[0]-par[1]/2;
+  Double_t topend=par[0]+par[1]/2;
+  Double_t redge=topstart-par[2]/2;
+  Double_t fedge=topend+par[2]/2;
+  Double_t height=par[3];
+  Double_t offset = par[4];
+  Double_t f;
+  if(xx<redge||xx>=fedge){
+	f = offset;
+  }else if(xx>=redge&&xx<topstart){
+	Double_t ratio=std::abs((xx-redge)/(topstart-redge));
+	f = offset+height*ratio;
+  }else if(xx>=topstart&&xx<topend){
+	f = offset+height;  
+  }else{
+	Double_t ratio=std::abs((xx-topend)/(fedge-topend));
+	f = offset+height*(1-ratio);
   }
+  return f;
+}
                                   

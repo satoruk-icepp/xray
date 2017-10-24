@@ -19,12 +19,16 @@ Double_t PhiPosGapAllch[nMPPC];
 void InnerGeometry(Double_t PropertyAllSiPM[nMPPC],Double_t Min, Double_t Max);
 int colordtm(Double_t value,Double_t vmin, Double_t vmax);
 
-void comp_xray_faro(){
+void make3Dplot(){
+  gStyle->SetTitleOffset( 2,"XYZ");
+  gStyle->SetTitleSize( 0.03,"XYZ");
+  gStyle->SetLabelSize( 0.03,"XYZ");
+  gStyle->SetPalette(1);
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
-  TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
-  TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
-  TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
-  TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
+  //TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
+  //TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
+  //TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
+  //TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
   TGraph2D* geometry =new TGraph2D();
 
@@ -50,101 +54,48 @@ void comp_xray_faro(){
   tfaro->SetBranchAddress("ZPos",&FaroZPos);
   tfaro->SetBranchAddress("DataQual",&FaroDataQual);
 
-  Int_t N=txray->GetEntries();
-  std::cout<<"All channels: "<<N<<std::endl;
-  Int_t cntz=0;
-  Int_t cntphi=0;
-  Double_t tmpzpos;
-  Bool_t former=false;
-  Double_t theta= -TMath::Pi()*0.0/180;
-
   for(int iCh=0;iCh<nMPPC;iCh++){
-	txray->GetEntry(iCh);
 	tfaro->GetEntry(iCh);
-	ZPosXray[iCh]=ZPos;
-	Int_t chline=floor(iCh/NLine);
-	//std::cout<<"channel:  "<<iCh<<"  line:  "<<chline;
-	/*Double_t XPosRealDesign;
-	Double_t YPosRealDesign;
-	Double_t ZPosRealDesign;
-	Double_t PhiPosRealDesign;
-	for(int i=0;i<4;i++){
-	  if(chline>=CFRPOrigin[i]&&chline<CFRPOrigin[i+1]){
-		//std::cout<<"CFRP:"<<i<<std::endl;
-		ZPosDesign=ZPosDesign+CFRPGap[i];
-		Double_t tmpy=YPosDesign;
-		  Double_t tmpz=ZPosDesign;
-		  Double_t LocalR=sqrt(tmpy*tmpy+tmpz*tmpz);
-		  Double_t LocalPhi = TMath::ATan2(tmpy,tmpz);
-		  XPosRealDesign=XPosDesign;
-		  YPosRealDesign=LocalR*sin(LocalPhi+theta);
-		  ZPosRealDesign=LocalR*cos(LocalPhi+theta);
-		  PhiPosRealDesign=XYZ2Phi(XPosRealDesign,YPosRealDesign,ZPosRealDesign);
-		  break;
-	  }
-	}*/
-	/*if(PhiDataQual==true){
-	  PhiPosGapAllch[iCh]=PhiPos-PhiPosDesign;
-	  AllPhiPosErr[iCh]=PhiPosErr;
-	}else{
-	  PhiPosGapAllch[iCh]=-100;
-	}*/
-	if(ZDataQual==true&&std::abs(ZPos)<150){
-	  /*if(former==true){
-		WidthHist->Fill((ZPos-tmpzpos)/cos(theta));
-		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
-		if((ZPos-tmpzpos)/cos(theta)>17.0){
-		  std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
-		}
-
-	  }
-	  if(iCh%44!=21){
-		former=true;
-	  }else{
-		former=false;
-		}
-		tmpzpos=ZPos;*/
-	  ZPosGapAllch[iCh]=ZPos-FaroZPos;
-	  //AllZPosErr[iCh]=ZPosErr;
-	  grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
-	}else{
-	  ZPosGapAllch[iCh]=-100;
-	  former=false;
+	if(FaroDataQual==true){
 	}
-	//grGapCor->SetPoint(iCh,AllZPosGap[iCh],AllPhiPosGap[iCh]);
+	geometry->SetPoint(iCh,FaroZPos,FaroXPos,FaroYPos);
 
   }
 
+  canvas1->cd();
+  geometry->SetTitle("Faro Geometry;Z Position[mm];X Position[mm];Y Position[mm]");
+  geometry->SetMaximum(800);
+  geometry->SetMinimum(-800);
+  geometry->GetXaxis()->SetLimits(-400,400);
+  geometry->GetYaxis()->SetLimits(-800,800); 
 
-  /* canvas1->cd();
-  TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
-  ptPhi->AddText("Gap between Designed Value in the Phi Direction");
-  ptPhi->Draw();
-  InnerGeometry(PhiPosGapAllch,-0.5,0.5);*/
+  //geometry->SetMarkerSize(5);
+  geometry->Draw("pcol");
+  /*
   
-  canvas2->cd();
-  TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
-  ptZ->AddText("Deviation between Designed Value in the Z Direction");
-  ptZ->Draw();
-  InnerGeometry(ZPosGapAllch,-10.0,10.0);
+	canvas2->cd();
+	TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
+	ptZ->AddText("Deviation between Designed Value in the Z Direction");
+	ptZ->Draw();
+	InnerGeometry(ZPosGapAllch,-10.0,10.0);
   
-  canvas3->cd();
-  grChZPos->SetMarkerStyle(22);
-  grChZPos->SetMarkerColor(2);
-  grChZPos->SetTitle("Deviation from the design value;Z_{Xray}[mm];Deviation[mm]");
-  grChZPos->Draw("ap");
-  /*canvas4->cd();
+	canvas3->cd();
+	grChZPos->SetMarkerStyle(22);
+	grChZPos->SetMarkerColor(2);
+	grChZPos->SetTitle("Deviation from the design value;Z_{Xray}[mm];Deviation[mm]");
+	grChZPos->Draw("ap");
+	canvas4->cd();
 	grGapCor->GetXaxis()->SetLimits(-10,10);
 	grGapCor->SetMinimum(-10);
 	grGapCor->SetMaximum(10);
 	grGapCor->Draw("ap");
   */
   /*
-  canvas5->cd();
-  canvas5->SetGrid(0,0);
-  gStyle->SetFuncColor(kRed);
-  WidthHist->Fit("gaus");
-  WidthHist->Draw();*/
+	canvas5->cd();
+	canvas5->SetGrid(0,0);
+	gStyle->SetFuncColor(kRed);
+	WidthHist->Fit("gaus");
+	WidthHist->Draw();*/
 }
 
 Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */) {

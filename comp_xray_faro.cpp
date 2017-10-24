@@ -26,7 +26,10 @@ void comp_xray_faro(){
   TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
-  TFile *fxray = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch.root","READ");
+  TString xraydatapath = "$(MEG2SYS)/analyzer/x-ray/";
+  TString xrayfilename = "xray_UCI_allch.root";
+  TString xrayrootfile = xraydatapath + xrayfilename;
+  TFile *fxray = new TFile(xrayrootfile.Data(),"READ");
   TTree *txray = (TTree*)fxray->Get("uci");
 
   TString farodatapath = "$(MEG2SYS)/analyzer/macros/xec/survey/";
@@ -36,7 +39,7 @@ void comp_xray_faro(){
   TTree* tfaro = (TTree*)ffaro->Get("faro");
 
   TGraph* grChZPos=new TGraph();
-  TGraph* grGapCor=new TGraph();
+  TGraph* grXrayFaroCor=new TGraph();
   TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",400,0,20);
   //WidthHist->SetStats(0); //非表示
 
@@ -44,7 +47,6 @@ void comp_xray_faro(){
   /*Define CFRP*/
   Int_t CFRPOrigin[5]={0,24,47,70,93};
   Double_t CFRPGap[4]={0,0.6,2.1,3.7};
-
 
   /*xray tree */
   Int_t XRayChNum;
@@ -95,50 +97,13 @@ void comp_xray_faro(){
 	tfaro->GetEntry(iCh);
 	ZPosXray[iCh]=ZPos;
 	Int_t chline=floor(iCh/NLine);
-	//std::cout<<"channel:  "<<iCh<<"  line:  "<<chline;
-	/*Double_t XPosRealDesign;
-	Double_t YPosRealDesign;
-	Double_t ZPosRealDesign;
-	Double_t PhiPosRealDesign;
-	for(int i=0;i<4;i++){
-	  if(chline>=CFRPOrigin[i]&&chline<CFRPOrigin[i+1]){
-		//std::cout<<"CFRP:"<<i<<std::endl;
-		ZPosDesign=ZPosDesign+CFRPGap[i];
-		Double_t tmpy=YPosDesign;
-		  Double_t tmpz=ZPosDesign;
-		  Double_t LocalR=sqrt(tmpy*tmpy+tmpz*tmpz);
-		  Double_t LocalPhi = TMath::ATan2(tmpy,tmpz);
-		  XPosRealDesign=XPosDesign;
-		  YPosRealDesign=LocalR*sin(LocalPhi+theta);
-		  ZPosRealDesign=LocalR*cos(LocalPhi+theta);
-		  PhiPosRealDesign=XYZ2Phi(XPosRealDesign,YPosRealDesign,ZPosRealDesign);
-		  break;
-	  }
-	}*/
-	/*if(PhiDataQual==true){
-	  PhiPosGapAllch[iCh]=PhiPos-PhiPosDesign;
-	  AllPhiPosErr[iCh]=PhiPosErr;
-	}else{
-	  PhiPosGapAllch[iCh]=-100;
-	}*/
-	if(ZDataQual==true&&std::abs(ZPos)<150){
-	  /*if(former==true){
-		WidthHist->Fill((ZPos-tmpzpos)/cos(theta));
-		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
-		if((ZPos-tmpzpos)/cos(theta)>17.0){
-		  std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
-		}
 
-	  }
-	  if(iCh%44!=21){
-		former=true;
-	  }else{
-		former=false;
-		}
-		tmpzpos=ZPos;*/
+	if(ZDataQual==true&&std::abs(ZPos)<150&&FaroDataQual==true){
+
 	  ZPosGapAllch[iCh]=ZPos-FaroZPos;
 	  //AllZPosErr[iCh]=ZPosErr;
 	  grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
+	  grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
 	}else{
 	  ZPosGapAllch[iCh]=-100;
 	  former=false;
@@ -149,10 +114,10 @@ void comp_xray_faro(){
 
 
   /* canvas1->cd();
-  TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
-  ptPhi->AddText("Gap between Designed Value in the Phi Direction");
-  ptPhi->Draw();
-  InnerGeometry(PhiPosGapAllch,-0.5,0.5);*/
+	 TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
+	 ptPhi->AddText("Gap between Designed Value in the Phi Direction");
+	 ptPhi->Draw();
+	 InnerGeometry(PhiPosGapAllch,-0.5,0.5);*/
   
   canvas2->cd();
   TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
@@ -165,18 +130,18 @@ void comp_xray_faro(){
   grChZPos->SetMarkerColor(2);
   grChZPos->SetTitle("Deviation from the design value;Z_{Xray}[mm];Deviation[mm]");
   grChZPos->Draw("ap");
-  /*canvas4->cd();
-	grGapCor->GetXaxis()->SetLimits(-10,10);
-	grGapCor->SetMinimum(-10);
-	grGapCor->SetMaximum(10);
-	grGapCor->Draw("ap");
-  */
+  canvas4->cd();
+  //grXrayFaro->GetXaxis()->SetLimits(-10,10);
+  //grXrayFaro->SetMinimum(-10);
+  //grXrayFaro->SetMaximum(10);
+  grXrayFaroCor->Draw("ap");
+
   /*
-  canvas5->cd();
-  canvas5->SetGrid(0,0);
-  gStyle->SetFuncColor(kRed);
-  WidthHist->Fit("gaus");
-  WidthHist->Draw();*/
+	canvas5->cd();
+	canvas5->SetGrid(0,0);
+	gStyle->SetFuncColor(kRed);
+	WidthHist->Fit("gaus");
+	WidthHist->Draw();*/
 }
 
 Double_t XYZ2Phi(Double_t x, Double_t y, Double_t /* z */) {
