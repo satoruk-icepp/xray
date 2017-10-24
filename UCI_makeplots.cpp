@@ -176,33 +176,6 @@ Int_t arraysearch(std::vector<Double_t> array, Double_t value){
   return i;
 }
 
-  Double_t ArbFunc(Double_t *x,Double_t *par){
-	Float_t xx=x[0];
-	//Double_t f = par[0]/sqrt(2*TMath::Pi()*par[1])*TMath::Exp(-pow(xx-par[2],2)/(2*par[1]));
-	//par[0]:mean
-	//par[1]:topwidth
-	//par[2]:zerowidth-topwidth
-	//par[3]:height
-	Double_t topstart=par[0]-par[1]/2;
-	Double_t topend=par[0]+par[1]/2;
-	Double_t redge=topstart-par[2]/2;
-	Double_t fedge=topend+par[2]/2;
-	Double_t height=par[3];
-	Double_t f;
-	if(xx<redge||xx>=fedge){
-	  f=0;
-	}else if(xx>=redge&&xx<topstart){
-	  Double_t ratio=std::abs((xx-redge)/(topstart-redge));
-	  f= height*ratio;
-	}else if(xx>=topstart&&xx<topend){
-	  f=height;  
-	}else{
-	  Double_t ratio=std::abs((xx-topend)/(fedge-topend));
-	  f=height*(1-ratio);
-	}
-	return f;
-  }
-
 void InnerGeometry(Double_t PropertyAllSiPM[nMPPC],Double_t Min,Double_t Max){
 
   Double_t CenterBoxWidth=0.8;
