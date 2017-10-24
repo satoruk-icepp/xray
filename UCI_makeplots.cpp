@@ -25,7 +25,7 @@ void UCI_makeplots(){
   TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_DK.root","READ");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_TG.root","READ");
   TTree *xrayac = (TTree*)frec->Get("uci");
 
   TGraph* grChZPos=new TGraph();
@@ -197,7 +197,7 @@ void InnerGeometry(Double_t PropertyAllSiPM[nMPPC],Double_t Min,Double_t Max){
 	  Int_t Color=colordtm(PropertyAllSiPM[i*NLine+j],Min,Max);
 	  b->SetFillColor(Color);
 	  b->Draw();
-	  //t->Draw();
+	  // t->Draw();
 	}
   }
 
