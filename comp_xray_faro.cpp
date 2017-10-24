@@ -121,7 +121,7 @@ void comp_xray_faro(){
 	}else{
 	  PhiPosGapAllch[iCh]=-100;
 	}*/
-	if(ZDataQual==true&&std::abs(ZPos)<150&&FaroDataQual==true){
+	if(ZDataQual==true&&std::abs(ZPos)<150){
 	  /*if(former==true){
 		WidthHist->Fill((ZPos-tmpzpos)/cos(theta));
 		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
