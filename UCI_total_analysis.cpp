@@ -35,7 +35,7 @@ Int_t PhiRunNum=sizeof(PhiRunList)/sizeof(PhiRunList[0]);
 Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 
 void UCI_total_analysis(){
-  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_dk.root","RECREATE");
+  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","RECREATE");
   TTree *tall =new TTree("uci","uci");
 
   Int_t ChNum;

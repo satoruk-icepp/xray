@@ -91,14 +91,14 @@ void UCI_makeplots(){
 		ZPosDesign=ZPosDesign+CFRPGap[i];
 	  }
 	}
-	Bool_t ZDataQual=false;
-	if(ZChiSq<1000){
+	Bool_t ZDataQual=true;
+	//if(ZChiSq<1000){
 	  if(DataQual(ZErr,false,ZPos,ZPosDesign)==true){
 		ZDataQual=true;
 	  }
-	}
+	  //}
 
-	if(ZMeasured==true&&ZDataQual==true&&std::abs(ZPos)<120){
+	if(ZMeasured==true&&ZDataQual==true){
 	  if(former==true){
 		WidthHist->Fill(ZPos-tmpzpos);
 		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
@@ -123,7 +123,7 @@ void UCI_makeplots(){
 	  former=false;
 	}
 
-	Bool_t PhiDataQual=false;
+	Bool_t PhiDataQual=true;
 	if(PhiChiSq<5000){
 	  if(DataQual(PhiErr,true,PhiPos,PhiPosDesign)==true){
 		PhiDataQual=true;
@@ -152,13 +152,13 @@ void UCI_makeplots(){
 
   canvas1->cd();
   TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
-  ptPhi->AddText("Deviation between Designed Value in the Phi Direction");
+  ptPhi->AddText("#phi_{calc}-#phi_{design}");
   ptPhi->Draw();
   InnerGeometry(PhiPosGapAllch,-0.5,0.5);
   
   canvas2->cd();
   TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
-  ptZ->AddText("Deviation between Designed Value in the Z Direction");
+  ptZ->AddText("Z_{calc}-Z_{design}");
   ptZ->Draw();
   //InnerGeometryArrow(ZPosGapAllch,ZMeasuredAllch,-10.0,0.0);
   InnerGeometry(ZPosGapAllch,-10.0,0.0);
@@ -183,7 +183,7 @@ void UCI_makeplots(){
 
 Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design){
   Bool_t Quality=true;
-  Double_t PhiErrMax[5]={0.1,0.5,0.2,8,0.5};
+  Double_t PhiErrMax[5]={0.05,0.2,0.1,8,0.4};
   Double_t ZErrMax[5]={0.5,2,1,100,0.5};
   Double_t Gap=std::abs(Position-Design);
   Double_t PhiGapMax=1;

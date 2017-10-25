@@ -18,13 +18,26 @@ int colordtm(Double_t value,Double_t vmin, Double_t vmax){
 }
 
 void InnerGeometry(Double_t *PropertyAllSiPM,Double_t Min,Double_t Max){
-  TArrow* axisar= new TArrow(0.05,0.05,0.1,0.05);
-  TText* axisdesc= new TText(0,0,"Z Axis");
-  axisar->Draw();
-  axisdesc->Draw();
-  Double_t CenterBoxWidth=0.8;
+  TArrow* Zaxisar= new TArrow(0.1,0.05,0.2,0.05);
+  TText* Zaxisdesc= new TText(0.1,0,"Z");
+  Zaxisar->Draw();
+  Zaxisdesc->Draw();
+
+  TArrow* Phiaxisar= new TArrow(0.05,0.2,0.05,0.3);
+  TText* Phiaxisdesc= new TText(0,0.1,"{#phi}");
+  Phiaxisar->Draw();
+  Phiaxisdesc->Draw();
+
+
+  TText* UStext= new TText(0.7,0.4,"US");
+  TText* DStext= new TText(0,0.4,"DS");
+  UStext->Draw();
+  DStext->Draw();
+
+
+  Double_t CenterBoxWidth=0.6;
   Double_t CenterBoxHeight=0.8;
-  Double_t CenterBoxOriginX=0.85;
+  Double_t CenterBoxOriginX=0.7;
   Double_t CenterBoxOriginY=(1+CenterBoxHeight)/2;
   Double_t SiPMBoxWidth=CenterBoxWidth/NLine;
   Double_t SiPMBoxHeight=CenterBoxHeight/NRow;
@@ -47,7 +60,7 @@ void InnerGeometry(Double_t *PropertyAllSiPM,Double_t Min,Double_t Max){
 
   Double_t CBHeight=0.8;
   Double_t CBWidth=0.05;
-  Double_t CBOriginX=0.95;
+  Double_t CBOriginX=0.85;
   Double_t CBOriginY=0.1;
   Int_t Ncolor=100;
   Double_t OneCBHeight=CBHeight/Ncolor;
@@ -60,8 +73,8 @@ void InnerGeometry(Double_t *PropertyAllSiPM,Double_t Min,Double_t Max){
   TString MinNum,MaxNum;
   MinNum.Form("%f",Min);
   MaxNum.Form("%f",Max);
-  TText *MinText=new TText(0.80,0.05,Form("%.2lf [mm/deg]",Min));
-  TText *MaxText=new TText(0.80,0.9,Form("%.2lf [mm/deg]",Max));
+  TText *MinText=new TText(0.80,0.05,Form("%.2lf",Min));
+  TText *MaxText=new TText(0.80,0.9,Form("%.2lf",Max));
   MinText->SetTextSize(0.03);
   MaxText->SetTextSize(0.03);
   MinText->Draw();

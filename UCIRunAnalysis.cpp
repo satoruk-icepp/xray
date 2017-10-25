@@ -12,11 +12,6 @@
 #define NRow 93
 #define NLine 44
 
-Int_t arraysearch(std::vector<Double_t> array, Double_t value);
-Double_t ArbFunc(Double_t *x,Double_t *par);
-Double_t TwoGaus(Double_t *x,Double_t *par);
-
-
 Double_t SiPMZPos[nMPPC];
 Double_t SiPMPhiPos[nMPPC];
 Double_t SiPMZPosErr[nMPPC];
@@ -64,7 +59,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,int one) {
 	//	sscanf(graphname,"MPPC %d: Z %f mm, Phi %f deg; Beam: %f",&MPPCch,&GraphZPos,&GraphPhiPos,&Beam);
 	TString fitfuncname;
 	fitfuncname.Form("fit%d",i);
-	FitFunc[i] = new TF1(fitfuncname,TwoGaus,-300,300,5);
+	FitFunc[i] = new TF1(fitfuncname,ArbFunc,-300,300,5);
 	if(PhiScan==true){
 	  FitFunc[i]->SetRange(GraphPhiPos-10,GraphPhiPos+10);
 	  FitFunc[i]->SetParameters(GraphPhiPos,0.7,0.2,80,40);
@@ -103,28 +98,4 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,int one) {
 
   return;
 }
-
-
-
-
-  //________________________________________________________________________________
-
-
-  Int_t arraysearch(std::vector<Double_t> array, Double_t value){
-	Bool_t found=false;
-	Int_t sizearr=array.size();
-	int i=-1;
-	if(sizearr!=0){
-	  for (i = 0; i < sizearr; i++) {
-		if (array[i]==value) {
-		  found=true;
-		  break;
-		}
-	  }
-	}
-	if(found==false){
-	  i=-1;  
-	}
-	return i;
-  }
 
