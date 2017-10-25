@@ -1,3 +1,6 @@
+#define NRow 93
+#define NLine 44
+
 int colordtm(Double_t value,Double_t vmin, Double_t vmax){
   if (value<vmin) {
 	value=vmin;
@@ -14,7 +17,7 @@ int colordtm(Double_t value,Double_t vmin, Double_t vmax){
   return color;
 }
 
-void InnerGeometry(Double_t PropertyAllSiPM[nMPPC],Double_t Min,Double_t Max){
+void InnerGeometry(Double_t *PropertyAllSiPM,Double_t Min,Double_t Max){
 
   Double_t CenterBoxWidth=0.8;
   Double_t CenterBoxHeight=0.8;

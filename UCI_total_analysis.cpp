@@ -23,17 +23,19 @@ Double_t SiPMZPos[nMPPC];
 Double_t SiPMZPosDesign[nMPPC];
 Double_t SiPMZErr[Nfitparam][nMPPC];
 Double_t SiPMZChiSq[nMPPC];
+Bool_t SiPMZMeasured[nMPPC];
 
 Double_t SiPMPhiPos[nMPPC];
 Double_t SiPMPhiPosDesign[nMPPC];
 Double_t SiPMPhiErr[Nfitparam][nMPPC];
 Double_t SiPMPhiChiSq[nMPPC];
+Bool_t SiPMPhiMeasured[nMPPC];
 
 Int_t PhiRunNum=sizeof(PhiRunList)/sizeof(PhiRunList[0]);
 Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 
 void UCI_total_analysis(){
-  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_TG_Chi.root","RECREATE");
+  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_dk.root","RECREATE");
   TTree *tall =new TTree("uci","uci");
 
   Int_t ChNum;
@@ -42,17 +44,20 @@ void UCI_total_analysis(){
   Double_t OneChPhiPosDesign;
   Double_t OneChPhiErr[Nfitparam];
   Double_t OneChPhiChiSq;
+ Bool_t OneChPhiMeasured;
 
   Double_t OneChZPos;
   Double_t OneChZPosDesign;
   Double_t OneChZErr[Nfitparam];
   Double_t OneChZChiSq;
+  Bool_t OneChZMeasured;
 
   tall->Branch("ChNum",&ChNum);
 
   tall->Branch("PhiPos",&OneChPhiPos);
   tall->Branch("PhiPosDesign",&OneChPhiPosDesign);
   tall->Branch("PhiChiSq",&OneChPhiChiSq);
+  tall->Branch("PhiMeasured",&OneChPhiMeasured);
   for(int i=0;i<Nfitparam;i++){
 	tall->Branch(Form("PhiFitErr%d",i),&OneChPhiErr[i]);
   }
@@ -60,6 +65,7 @@ void UCI_total_analysis(){
   tall->Branch("ZPos",&OneChZPos);
   tall->Branch("ZPosDesign",&OneChZPosDesign);
   tall->Branch("ZChiSq",&OneChZChiSq);
+  tall->Branch("ZMeasured",&OneChZMeasured);
   for(int i=0;i<Nfitparam;i++){
 	tall->Branch(Form("ZFitErr%d",i),&OneChZErr[i]);
   }
@@ -78,6 +84,7 @@ void UCI_total_analysis(){
     OneChPhiPos=SiPMPhiPos[iCh];
     OneChPhiPosDesign=SiPMPhiPosDesign[iCh];
 	OneChPhiChiSq=SiPMPhiChiSq[iCh];
+	OneChPhiMeasured=SiPMPhiMeasured[iCh];
 	for(int i=0;i<Nfitparam;i++){
 	  OneChPhiErr[i]=SiPMPhiErr[i][iCh];
 	}
@@ -86,6 +93,7 @@ void UCI_total_analysis(){
 	OneChZPos=SiPMZPos[iCh];
 	OneChZPosDesign=SiPMZPosDesign[iCh];
 	OneChZChiSq=SiPMZChiSq[iCh];
+	OneChZMeasured=SiPMZMeasured[iCh];
 	for(int i=0;i<Nfitparam;i++){
 	  OneChZErr[i]=SiPMZErr[i][iCh];
 	}
@@ -134,7 +142,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	SiPMZPosDesign[MPPCch]=GraphZPos;
 	TString fitfuncname;
 	fitfuncname.Form("fit%d",i);
-	FitFunc[i] = new TF1(fitfuncname,TwoGaus,-300,300,5);
+	FitFunc[i] = new TF1(fitfuncname,ArbFunc,-300,300,5);
 	Double_t FitErr[5];
 	Double_t MeasPos;
 	Double_t TopWidth;
@@ -176,68 +184,19 @@ void UCIRunAnalysis(int run, Bool_t PhiScan) {
 	if(PhiScan==true){
 	  SiPMPhiPos[MPPCch]=MeasPos;
 	  SiPMPhiChiSq[MPPCch]=ChiSquare;
+	  SiPMPhiMeasured[MPPCch]=true;
 	  for(int i=0;i<Nfitparam;i++){
 		SiPMPhiErr[i][MPPCch]=FitErr[i];
 	  }
+
 	}else{
 	  SiPMZPos[MPPCch]=MeasPos;	 
 	  SiPMZChiSq[MPPCch]=ChiSquare;
+	  SiPMZMeasured[MPPCch]=true;
 	  for(int i=0;i<Nfitparam;i++){
 		SiPMZErr[i][MPPCch]=FitErr[i];
 	  }
 	}
   }
   return;
-}
-
-  //________________________________________________________________________________
-
-
-  Int_t arraysearch(std::vector<Double_t> array, Double_t value){
-	Bool_t found=false;
-	Int_t sizearr=array.size();
-	int i=-1;
-	if(sizearr!=0){
-	  for (i = 0; i < sizearr; i++) {
-		if (array[i]==value) {
-		  found=true;
-		  break;
-		}
-	  }
-	}
-	if(found==false){
-	  i=-1;  
-	}
-	return i;
-  }
-
-Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design){
-  Bool_t Quality=true;
-  Double_t PhiErrMax[5]={0.1,0.5,0.2,8,0.5};
-  Double_t ZErrMax[5]={0.5,2,1,100,0.5};
-  Double_t Gap=std::abs(Position-Design);
-  Double_t PhiGapMax=1;
-  Double_t ZGapMax=20;
-  if(PhiScan==true){
-	for(int i=0;i<5;i++){
-	  if(FitErr[i]>PhiErrMax[i]){
-		Quality=false;
-		break;
-	  }
-	  if(Gap>PhiGapMax){
-		Quality=false;
-	  }
-	}
-  }else{
-	for(int i=0;i<5;i++){
-	  if(FitErr[i]>ZErrMax[i]){
-		Quality=false;
-		break;
-	  }
-	}
-	if(Gap>ZGapMax){
-	  Quality=false;	  
-	}
-  }
-  return Quality;
 }
