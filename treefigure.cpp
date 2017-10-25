@@ -1,8 +1,9 @@
+#include "DataQual.h"
 void treefigure(){
   TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
   TTree *txray = (TTree*)frec->Get("uci");
-  TCanvas* canvasZ= new TCanvas("canvasZ","canvasZ",600,600);
-  TCanvas* canvasPhi= new TCanvas("canvasPhi","canvasPhi",600,600);
+  TCanvas* canvasZ= new TCanvas("canvasZ","canvasZ",800,600);
+  TCanvas* canvasPhi= new TCanvas("canvasPhi","canvasPhi",800,600);
   Bool_t ZMeasured;
   Bool_t PhiMeasured;
   Double_t ZErr[5];
@@ -16,11 +17,9 @@ void treefigure(){
 
   TH1D* ZErrHist[5];
   TH1D* PhiErrHist[5];
-
-  Double_t ZQCut[5]={0.5,2,1,100,0.5};
-  Double_t ZHistMax[5]={1,4,2,300,1};
-  Double_t PhiQCut[5]={0.05,0.2,0.1,8,0.4};
-  Double_t PhiHistMax[5]={0.1,0.4,0.2,16,0.8};
+ 
+  Double_t ZHistMax[5]={1,4,4,5,1};
+  Double_t PhiHistMax[5]={0.1,0.4,0.4,16,0.8};
   for(int i=0;i<5;i++){
 	TString Parameter;
 	Parameter.Form("Fit Error %d",i);
@@ -73,8 +72,8 @@ void treefigure(){
 	}
   }
 
-  canvasZ->Divide(2,3);
-  canvasPhi->Divide(2,3);
+  canvasZ->Divide(3,2);
+  canvasPhi->Divide(3,2);
   for(int i=0;i<5;i++){
 	canvasZ->cd(i+1);
 	ZErrHist[i]->Draw();

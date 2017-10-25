@@ -6,6 +6,7 @@
 #ifndef __CINT__
 #include "ROMETreeInfo.h"
 #include "InnerGeometry.h"
+#include "DataQual.h"
 #endif
 #define nMPPC 4092
 #define kNchforXray 272
@@ -71,32 +72,22 @@ void UCI_makeplots(){
 
   Int_t N=txray->GetEntries();
   std::cout<<"All channels: "<<N<<std::endl;
-  //Int_t cntz=0;
-  //Int_t cntphi=0;
   Double_t tmpzpos;
   Bool_t former=false;
-  //Double_t theta= -TMath::Pi()*0.0/180;
 
   for(int iCh=0;iCh<nMPPC;iCh++){
 	txray->GetEntry(iCh);
 
 	Int_t chline=floor(iCh/NLine);
-	//std::cout<<"channel:  "<<iCh<<"  line:  "<<chline;
-	//Double_t XPosRealDesign;
-	//Double_t YPosRealDesign;
-	//Double_t ZPosRealDesign;
-	//Double_t PhiPosRealDesign;
 	for(int i=0;i<4;i++){
 	  if(chline>=CFRPOrigin[i]&&chline<CFRPOrigin[i+1]){
 		ZPosDesign=ZPosDesign+CFRPGap[i];
 	  }
 	}
-	Bool_t ZDataQual=true;
-	//if(ZChiSq<1000){
-	  if(DataQual(ZErr,false,ZPos,ZPosDesign)==true){
-		ZDataQual=true;
-	  }
-	  //}
+	Bool_t ZDataQual=false;
+	if(DataQual(ZErr,false,ZPos,ZPosDesign)==true){
+	  ZDataQual=true;
+	}
 
 	if(ZMeasured==true&&ZDataQual==true){
 	  if(former==true){
@@ -114,7 +105,6 @@ void UCI_makeplots(){
 	  tmpzpos=ZPos;
 	  ZPosGapAllch[iCh]=ZPos-ZPosDesign;
 	  ZChiSqAllch[iCh]=ZChiSq;
-	  //AllZPosErr[iCh]=ZPosErr;
 	  ZMeasuredAllch[iCh]=ZMeasured;
 	  grChZPos->SetPoint(iCh,ChNum,ZPos-ZPosDesign);
 	}else{
@@ -123,19 +113,15 @@ void UCI_makeplots(){
 	  former=false;
 	}
 
-	Bool_t PhiDataQual=true;
-	if(PhiChiSq<5000){
-	  if(DataQual(PhiErr,true,PhiPos,PhiPosDesign)==true){
-		PhiDataQual=true;
-	  }
+	Bool_t PhiDataQual=false;
+	//if(PhiChiSq<5000){
+	if(DataQual(PhiErr,true,PhiPos,PhiPosDesign)==true){
+	  PhiDataQual=true;
 	}
+	//	}
 
 	if(PhiMeasured==true&&PhiDataQual==true){
 	  PhiPosGapAllch[iCh]=PhiPos-PhiPosDesign;
-	  //	  ZChiSqAllch[iCh]=ZChiSq;
-	  //AllZPosErr[iCh]=ZPosErr;
-	  //ZMeasuredAllch[iCh]=ZMeasured;
-	  //grChZPos->SetPoint(iCh,ChNum,ZPos-ZPosDesign);
 	}else{
 	  PhiPosGapAllch[iCh]=-100;
 	  former=false;
@@ -180,35 +166,3 @@ void UCI_makeplots(){
   WidthHist->Fit("gaus");
   WidthHist->Draw();
 }
-
-Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design){
-  Bool_t Quality=true;
-  Double_t PhiErrMax[5]={0.05,0.2,0.1,8,0.4};
-  Double_t ZErrMax[5]={0.5,2,1,100,0.5};
-  Double_t Gap=std::abs(Position-Design);
-  Double_t PhiGapMax=1;
-  Double_t ZGapMax=20;
-  if(PhiScan==true){
-	for(int i=0;i<5;i++){
-	  if(FitErr[i]>PhiErrMax[i]){
-		Quality=false;
-		break;
-	  }
-	  if(Gap>PhiGapMax){
-		Quality=false;
-	  }
-	}
-  }else{
-	for(int i=0;i<5;i++){
-	  if(FitErr[i]>ZErrMax[i]){
-		Quality=false;
-		break;
-	  }
-	}
-	if(Gap>ZGapMax){
-	  Quality=false;	  
-	}
-  }
-  return Quality;
-}
-
