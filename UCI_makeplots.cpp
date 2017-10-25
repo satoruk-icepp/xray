@@ -15,8 +15,9 @@
 Double_t ZPosGapAllch[nMPPC];
 Double_t PhiPosGapAllch[nMPPC];
 Double_t ZChiSqAllch[nMPPC];
+Bool_t ZMeasuredAllch[nMPPC];
 
-Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan/*, Double_t Position, Double_t Design*/);
+Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design);
 
 void UCI_makeplots(){
 TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
@@ -25,7 +26,7 @@ TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
 TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
 TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
- TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_TG_Chi.root","READ");
+ TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
  TTree *txray = (TTree*)frec->Get("uci");
 
  TGraph* grChZPos=new TGraph();
@@ -43,13 +44,13 @@ TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
  Double_t PhiPosDesign;
  Double_t PhiErr[5];
  Double_t PhiChiSq;
- Int_t PhiMeasured;
+ Bool_t PhiMeasured;
 
  Double_t ZPos;
  Double_t ZPosDesign;
  Double_t ZErr[5];
  Double_t ZChiSq;
- Int_t ZMeasured;
+ Bool_t ZMeasured;
 
  txray->SetBranchAddress("ChNum",&ChNum);
 
@@ -78,6 +79,7 @@ TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
  for(int iCh=0;iCh<nMPPC;iCh++){
    txray->GetEntry(iCh);
+
    Int_t chline=floor(iCh/NLine);
    //std::cout<<"channel:  "<<iCh<<"  line:  "<<chline;
    //Double_t XPosRealDesign;
@@ -91,12 +93,12 @@ TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
    }
    Bool_t ZDataQual=false;
    if(ZChiSq<1000){
-	 if(DataQual(ZErr,false)==true){
+	 if(DataQual(ZErr,false,ZPos,ZPosDesign)==true){
 	   ZDataQual=true;
 	 }
    }
 
-   if(ZMeasured==1&&ZDataQual==true&&std::abs(ZPos)<120){
+   if(ZMeasured==true&&ZDataQual==true&&std::abs(ZPos)<120){
 	 if(former==true){
 	   WidthHist->Fill(ZPos-tmpzpos);
 	   //	std::cout<<"factor: "<<cos(theta)<<std::endl;
@@ -113,6 +115,7 @@ TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 	 ZPosGapAllch[iCh]=ZPos-ZPosDesign;
 	 ZChiSqAllch[iCh]=ZChiSq;
 	 //AllZPosErr[iCh]=ZPosErr;
+   ZMeasuredAllch[iCh]=ZMeasured;
 	 grChZPos->SetPoint(iCh,ChNum,ZPos-ZPosDesign);
    }else{
 	 ZPosGapAllch[iCh]=-100;
@@ -130,14 +133,15 @@ TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
  canvas1->cd();
  TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
- ptPhi->AddText("Gap between Designed Value in the Phi Direction");
+ ptPhi->AddText("Deviation between Designed Value in the Phi Direction");
  ptPhi->Draw();
  InnerGeometry(PhiPosGapAllch,-0.5,0.5);
   
  canvas2->cd();
  TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
- ptZ->AddText("Gap between Designed Value in the Z Direction");
+ ptZ->AddText("Deviation between Designed Value in the Z Direction");
  ptZ->Draw();
+//InnerGeometryArrow(ZPosGapAllch,ZMeasuredAllch,-10.0,0.0);
  InnerGeometry(ZPosGapAllch,-10.0,0.0);
   
  canvas3->cd();
@@ -158,22 +162,22 @@ TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
  WidthHist->Draw();
 }
 
-Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan/*, Double_t Position, Double_t Design*/){
+Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design){
   Bool_t Quality=true;
   Double_t PhiErrMax[5]={0.1,0.5,0.2,8,0.5};
   Double_t ZErrMax[5]={0.5,2,1,100,0.5};
-  //Double_t Gap=std::abs(Position-Design);
-  //Double_t PhiGapMax=1;
-  //Double_t ZGapMax=20;
+  Double_t Gap=std::abs(Position-Design);
+  Double_t PhiGapMax=1;
+  Double_t ZGapMax=20;
   if(PhiScan==true){
 	for(int i=0;i<5;i++){
 	  if(FitErr[i]>PhiErrMax[i]){
 		Quality=false;
 		break;
 	  }
-	  /*if(Gap>PhiGapMax){
+	  if(Gap>PhiGapMax){
 		Quality=false;
-		}*/
+	  }
 	}
   }else{
 	for(int i=0;i<5;i++){
@@ -182,9 +186,9 @@ Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan/*, Double_t Position, Double_t 
 		break;
 	  }
 	}
-	/*if(Gap>ZGapMax){
+	if(Gap>ZGapMax){
 	  Quality=false;	  
-	  }*/
+	}
   }
   return Quality;
 }

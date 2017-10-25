@@ -18,7 +18,10 @@ int colordtm(Double_t value,Double_t vmin, Double_t vmax){
 }
 
 void InnerGeometry(Double_t *PropertyAllSiPM,Double_t Min,Double_t Max){
-
+  TArrow* axisar= new TArrow(0.05,0.05,0.1,0.05);
+  TText* axisdesc= new TText(0,0,"Z Axis");
+  axisar->Draw();
+  axisdesc->Draw();
   Double_t CenterBoxWidth=0.8;
   Double_t CenterBoxHeight=0.8;
   Double_t CenterBoxOriginX=0.85;
@@ -57,12 +60,52 @@ void InnerGeometry(Double_t *PropertyAllSiPM,Double_t Min,Double_t Max){
   TString MinNum,MaxNum;
   MinNum.Form("%f",Min);
   MaxNum.Form("%f",Max);
-  TText *MinText=new TText(0.9,0.05,Form("%.2lf [mm/deg]",Min));
-  TText *MaxText=new TText(0.9,0.9,Form("%.2lf [mm/deg]",Max));
-  MinText->SetTextSize(0.02);
-  MaxText->SetTextSize(0.02);
+  TText *MinText=new TText(0.85,0.05,Form("%.2lf [mm/deg]",Min));
+  TText *MaxText=new TText(0.85,0.9,Form("%.2lf [mm/deg]",Max));
+  MinText->SetTextSize(0.04);
+  MaxText->SetTextSize(0.04);
   MinText->Draw();
   MaxText->Draw();
 }
+
+
+void InnerGeometryArrow(Double_t *PropertyAllSiPM,Bool_t *valid ,Double_t Min,Double_t Max){
+  TArrow* axisar= new TArrow(0.05,0.05,0.1,0.05);
+  TText* axisdesc= new TText(0,0,"Z Axis");
+  axisar->Draw();
+  axisdesc->Draw();
+  
+  Double_t CenterBoxWidth=0.8;
+  Double_t CenterBoxHeight=0.8;
+  Double_t CenterBoxOriginX=0.85;
+  Double_t CenterBoxOriginY=(1+CenterBoxHeight)/2;
+  Double_t SiPMBoxWidth=CenterBoxWidth/NLine;
+  Double_t SiPMBoxHeight=CenterBoxHeight/NRow;
+  for(int i = 0; i<NRow; i++){
+	for(int j = 0; j<NLine; j++){
+	  if(valid[i*NLine+j]==true){
+		Double_t OneBoxXmax=CenterBoxOriginX-j*SiPMBoxWidth;
+		Double_t OneBoxYmax=CenterBoxOriginY-i*SiPMBoxHeight;
+		Double_t OneBoxXmin=OneBoxXmax-SiPMBoxWidth;
+		Double_t OneBoxYmin=OneBoxYmax-SiPMBoxHeight;
+		//TBox *b= new TBox(OneBoxXmin,OneBoxYmin,OneBoxXmax,OneBoxYmax);
+		Double_t OneBoxXcenter=(OneBoxXmax+OneBoxXmin)/2;
+		Double_t OneBoxYcenter=(OneBoxYmax+OneBoxYmin)/2;
+		Double_t ratio = std::abs(PropertyAllSiPM[i*NLine+j]-Min)/std::abs(Max-Min);
+		TArrow* ar = new TArrow(OneBoxXcenter,OneBoxYcenter,OneBoxXcenter+ratio*SiPMBoxWidth/2,OneBoxYcenter);
+		ar->SetArrowSize(0.01);
+		ar->Draw();
+	  }
+	  //TString chnum;
+	  //chnum.Form("%d",i*NRow+j);
+	  //TText *t=new TText(OneBoxXmin,OneBoxYmin,chnum);
+	  /* Int_t Color=colordtm(PropertyAllSiPM[i*NLine+j],Min,Max); */
+	  /* b->SetFillColor(Color); */
+	  /* b->Draw(); */
+	  // t->Draw();
+	}
+  }
+}
+
 
 
