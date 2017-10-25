@@ -60,10 +60,10 @@ void InnerGeometry(Double_t *PropertyAllSiPM,Double_t Min,Double_t Max){
   TString MinNum,MaxNum;
   MinNum.Form("%f",Min);
   MaxNum.Form("%f",Max);
-  TText *MinText=new TText(0.85,0.05,Form("%.2lf [mm/deg]",Min));
-  TText *MaxText=new TText(0.85,0.9,Form("%.2lf [mm/deg]",Max));
-  MinText->SetTextSize(0.04);
-  MaxText->SetTextSize(0.04);
+  TText *MinText=new TText(0.80,0.05,Form("%.2lf [mm/deg]",Min));
+  TText *MaxText=new TText(0.80,0.9,Form("%.2lf [mm/deg]",Max));
+  MinText->SetTextSize(0.03);
+  MaxText->SetTextSize(0.03);
   MinText->Draw();
   MaxText->Draw();
 }
