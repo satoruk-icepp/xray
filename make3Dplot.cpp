@@ -63,13 +63,13 @@ void make3Dplot(){
   }
 
   canvas1->cd();
-  geometry->SetTitle("Faro Geometry;Z Position[mm];X Position[mm];Y Position[mm]");
+  geometry->SetTitle("Faro + Leica Result;Z Position[mm];X Position[mm];Y Position[mm]");
   geometry->SetMaximum(800);
   geometry->SetMinimum(-800);
   geometry->GetXaxis()->SetLimits(-400,400);
   geometry->GetYaxis()->SetLimits(-800,800); 
-
-  //geometry->SetMarkerSize(5);
+  geometry->SetMarkerStyle(20);
+  geometry->SetMarkerSize(0.2);
   geometry->Draw("pcol");
   /*
   

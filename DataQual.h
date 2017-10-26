@@ -5,7 +5,7 @@ Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t De
   Bool_t Quality=true;
   Double_t Gap=std::abs(Position-Design);
   Double_t PhiGapMax=1;
-  Double_t ZGapMax=10;
+  Double_t ZGapMax=20;
   if(PhiScan==true){
 	for(int i=0;i<5;i++){
 	  if(FitErr[i]>PhiQCut[i]){

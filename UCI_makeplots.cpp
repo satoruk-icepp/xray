@@ -20,9 +20,9 @@ Double_t ZChiSqAllch[nMPPC];
 Bool_t ZMeasuredAllch[nMPPC];
 
 void UCI_makeplots(){
-  gStyle->SetTitleOffset( 2,"XYZ");
-  gStyle->SetTitleSize( 0.03,"XYZ");
-  gStyle->SetLabelSize( 0.03,"XYZ");
+  // gStyle->SetTitleOffset( 2,"XYZ");
+  // gStyle->SetTitleSize( 0.03,"XYZ");
+  // gStyle->SetLabelSize( 0.03,"XYZ");
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
   // TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
@@ -30,7 +30,7 @@ void UCI_makeplots(){
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
   //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_tg.root","READ");
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_tg.root","READ");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_tg.root","READ");
   //TTree *txray = (TTree*)frec->Get("uci");
   TTree *txray = (TTree*)frec->Get("txray");
   //TTree *txray = (TTree*)frec->Get("xrayac");
