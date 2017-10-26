@@ -29,7 +29,7 @@ void UCI_makeplots(){
   // TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
   //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
-TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch_dg.root","READ");
+TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_dg.root","READ");
 //TTree *txray = (TTree*)frec->Get("uci");
 TTree *txray = (TTree*)frec->Get("xrayac");
 
@@ -89,7 +89,7 @@ TTree *txray = (TTree*)frec->Get("xrayac");
 		ZPosDesign=ZPosDesign+CFRPGap[i];
 	  }
 	}
-	Bool_t ZDataQual=false;
+	Bool_t ZDataQual=true;
 	if(DataQual(ZErr,false,ZPos,ZPosDesign)==true){
 	  ZDataQual=true;
 	}

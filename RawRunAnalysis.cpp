@@ -33,8 +33,8 @@ Bool_t ZMeasuredAllch[nMPPC];
 Int_t PhiRunNum=sizeof(PhiRunList)/sizeof(PhiRunList[0]);
 Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 
-void OneRunAnalysis(int run,Bool_t PhiScan/*, Bool_t visualize =false*/) {
-  Int_t SiPMchNum;
+void RawRunAnalysis(int run,Bool_t PhiScan, Bool_t visualize =false) {
+  Int_t ChNum;
   Double_t Pos;
   Double_t PosDesign;
   Double_t PhiFitErr[5];
@@ -115,7 +115,7 @@ void OneRunAnalysis(int run,Bool_t PhiScan/*, Bool_t visualize =false*/) {
       }
     }
   }
- 
+
   /*Writing to File...*/
   //  fout->cd();
   for (Int_t iScalerCh = 0; iScalerCh < kNchforXray; iScalerCh++) {
@@ -141,12 +141,17 @@ void OneRunAnalysis(int run,Bool_t PhiScan/*, Bool_t visualize =false*/) {
 		  PhiFitErr[i]=FitFunc[iScalerCh]->GetParError(i);
 		  PhiFitErrAllch[ChNum][i]=PhiFitErr[i];
 		}
+		if(visualize==true){
+		  std::cout<<"iScalerCh: "<<iScalerCh<<" Channel: "<<ChNum<<" Position: "<<Pos<<std::endl;
+		}
+
       }else if(PhiScan==false){
-		FitFunc[iScalerCh]->SetRange(MPPCXYZ[iScalerCh][2]-50,MPPCXYZ[iScalerCh][2]+50);
-		FitFunc[iScalerCh]->SetParLimits(0,MPPCXYZ[iScalerCh][2]-15,MPPCXYZ[iScalerCh][2]+15);	
+		FitFunc[iScalerCh]->SetRange(MPPCXYZ[iScalerCh][2]-80,MPPCXYZ[iScalerCh][2]+80);
+		FitFunc[iScalerCh]->SetParLimits(0,MPPCXYZ[iScalerCh][2]-80,MPPCXYZ[iScalerCh][2]+80);	
 		FitFunc[iScalerCh]->SetParLimits(1,0,15);
 		FitFunc[iScalerCh]->SetParLimits(2,0,25);
-		FitFunc[iScalerCh]->SetParLimits(3,0,1000);
+		FitFunc[iScalerCh]->SetParLimits(3,0,5000);
+		FitFunc[iScalerCh]->SetParLimits(4,0,200);
 		FitFunc[iScalerCh]->SetParameters(MPPCXYZ[iScalerCh][2],10,2,80,40);
 		grScaler[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MNQ");
 		Pos=FitFunc[iScalerCh]->GetParameter(0);
@@ -159,8 +164,21 @@ void OneRunAnalysis(int run,Bool_t PhiScan/*, Bool_t visualize =false*/) {
 		  ZFitErr[i]=FitFunc[iScalerCh]->GetParError(i);
 		  ZFitErrAllch[ChNum][i]=ZFitErr[i];
 		}
+		if(visualize==true){
+		  std::cout<<"Channel: "<<ChNum<<" Position: "<<Pos<<std::endl;
+		}
       }
     }
   }
+
+  if(visualize==true){
+	Int_t visch;
+	std::cout<<"channel to visualize: ";
+	std::cin>>visch;
+	grScaler[visch]->Draw("ap");
+	FitFunc[visch]->SetLineColor(kRed);
+	FitFunc[visch]->Draw("same");
+  }
+
   return;
 }
