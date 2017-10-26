@@ -12,6 +12,7 @@
 #define kNchforXray 272
 #define NRow 93
 #define NLine 44
+#define Nfitparam 5
 
 Double_t ZPosGapAllch[nMPPC];
 Double_t PhiPosGapAllch[nMPPC];
@@ -28,14 +29,15 @@ void UCI_makeplots(){
   // TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
-  //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_dg.root","READ");
+  //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_tg.root","READ");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_tg.root","READ");
   //TTree *txray = (TTree*)frec->Get("uci");
-  TTree *txray = (TTree*)frec->Get("xrayac");
+  TTree *txray = (TTree*)frec->Get("txray");
+  //TTree *txray = (TTree*)frec->Get("xrayac");
 
   TGraph* grChZPos=new TGraph();
   TGraph* grGapCor=new TGraph();
-  TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",400,0,20);
+  TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",200,0,20);
   TGraph2D* grZDev=new TGraph2D();
   TGraph2D* grPhiDev=new TGraph2D();
   //WidthHist->SetStats(0); //非表示
@@ -46,32 +48,32 @@ void UCI_makeplots(){
 
   Int_t ChNum;
 
-  Double_t PhiPos;
+  Double_t PhiResult[Nfitparam];
+  Double_t PhiErr[Nfitparam];
   Double_t PhiPosDesign;
-  Double_t PhiErr[5];
   Double_t PhiChiSq;
   Bool_t PhiMeasured;
 
-  Double_t ZPos;
+  Double_t ZResult[Nfitparam];
+  Double_t ZErr[Nfitparam];
   Double_t ZPosDesign;
-  Double_t ZErr[5];
   Double_t ZChiSq;
   Bool_t ZMeasured;
 
   txray->SetBranchAddress("ChNum",&ChNum);
 
-  txray->SetBranchAddress("PhiPos",&PhiPos);
   txray->SetBranchAddress("PhiPosDesign",&PhiPosDesign);
   txray->SetBranchAddress("PhiChiSq",&PhiChiSq);
   txray->SetBranchAddress("PhiMeasured",&PhiMeasured);
 
-  txray->SetBranchAddress("ZPos",&ZPos);
   txray->SetBranchAddress("ZPosDesign",&ZPosDesign);
   txray->SetBranchAddress("ZChiSq",&ZChiSq);
   txray->SetBranchAddress("ZMeasured",&ZMeasured);
 
   for(int i=0;i<5;i++){
+	txray->SetBranchAddress(Form("PhiFitResult%d",i),&PhiResult[i]);
 	txray->SetBranchAddress(Form("PhiFitErr%d",i),&PhiErr[i]);
+	txray->SetBranchAddress(Form("ZFitResult%d",i),&ZResult[i]);
 	txray->SetBranchAddress(Form("ZFitErr%d",i),&ZErr[i]);
   }
 
@@ -90,15 +92,15 @@ void UCI_makeplots(){
 	  }
 	}
 	Bool_t ZDataQual=false;
-	if(DataQual(ZErr,false,ZPos,ZPosDesign)==true){
+	if(DataQual(ZErr,false,ZResult[0],ZPosDesign)==true){
 	  ZDataQual=true;
 	}
 
-	if(ZMeasured==true&&ZDataQual==true&&std::abs(ZPos)<120){
+	if(ZMeasured==true&&ZDataQual==true&&std::abs(ZResult[0])<120){
 	  if(former==true){
-		WidthHist->Fill(ZPos-tmpzpos);
+		WidthHist->Fill(ZResult[0]-tmpzpos);
 		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
-		if(ZPos-tmpzpos>17.0){
+		if(ZResult[0]-tmpzpos>17.0){
 		  std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
 		}
 	  }
@@ -107,30 +109,24 @@ void UCI_makeplots(){
 	  }else{
 		former=false;
 	  }
-	  tmpzpos=ZPos;
-	  ZPosGapAllch[iCh]=ZPos-ZPosDesign;
-	  ZChiSqAllch[iCh]=ZChiSq;
+	  tmpzpos=ZResult[0];
 	  ZMeasuredAllch[iCh]=ZMeasured;
-	  grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZPos-ZPosDesign);
-	  grZDev->SetPoint(grZDev->GetN(),ZPosDesign,PhiPosDesign,ZPos-ZPosDesign);
+	  grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZResult[0]-ZPosDesign);
+	  grZDev->SetPoint(grZDev->GetN(),ZPosDesign,PhiPosDesign,ZResult[0]-ZPosDesign);
 	}else{
-	  ZPosGapAllch[iCh]=-100;
-	  ZChiSqAllch[iCh]=-100;
 	  former=false;
 	}
 
 	Bool_t PhiDataQual=false;
 	//if(PhiChiSq<5000){
-	if(DataQual(PhiErr,true,PhiPos,PhiPosDesign)==true){
+	if(DataQual(PhiErr,true,PhiResult[0],PhiPosDesign)==true){
 	  PhiDataQual=true;
 	}
 	//	}
 
 	if(PhiMeasured==true&&PhiDataQual==true){
-	  PhiPosGapAllch[iCh]=PhiPos-PhiPosDesign;
-	  grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiPos-PhiPosDesign);
+	  grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiResult[0]-PhiPosDesign);
 	}else{
-	  PhiPosGapAllch[iCh]=-100;
 	  former=false;
 	}
 
@@ -145,8 +141,8 @@ void UCI_makeplots(){
   grPhiDev->SetTitle("#Phi Deviation;Z_{nom}[mm];#phi_{nom}[deg];#phi_{calc}-#phi_{nom}[deg]");
   grPhiDev->GetXaxis()->SetLimits(-300,300);
   grPhiDev->GetYaxis()->SetLimits(100,250);
-  grPhiDev->SetMaximum(0.6);
-  grPhiDev->SetMinimum(-0.2);
+  grPhiDev->SetMaximum(0.5);
+  grPhiDev->SetMinimum(-0.1);
   grPhiDev->SetMarkerStyle(20);
   grPhiDev->Draw("pcol");
   
@@ -167,7 +163,7 @@ void UCI_makeplots(){
   grZDev->GetXaxis()->SetLimits(-300,300);
   grZDev->GetYaxis()->SetLimits(100,250);
   grZDev->SetMarkerStyle(20);
-  grZDev->SetMaximum(2);
+  grZDev->SetMaximum(0);
   grZDev->SetMinimum(-8);
   grZDev->Draw("pcol");
 
