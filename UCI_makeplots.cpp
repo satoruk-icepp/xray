@@ -24,9 +24,9 @@ void UCI_makeplots(){
   gStyle->SetLabelSize( 0.03,"XYZ");
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
-  TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
-  TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
-  TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
+  // TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
+  // TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
+  // TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
   TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
   TTree *txray = (TTree*)frec->Get("uci");
@@ -92,7 +92,7 @@ void UCI_makeplots(){
 	  ZDataQual=true;
 	}
 
-	if(ZMeasured==true&&ZDataQual==true&&PhiPosDesign>10){
+	if(ZMeasured==true&&ZDataQual==true){
 	  if(former==true){
 		WidthHist->Fill(ZPos-tmpzpos);
 		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
@@ -109,8 +109,8 @@ void UCI_makeplots(){
 	  ZPosGapAllch[iCh]=ZPos-ZPosDesign;
 	  ZChiSqAllch[iCh]=ZChiSq;
 	  ZMeasuredAllch[iCh]=ZMeasured;
-	  grChZPos->SetPoint(iCh,ChNum,ZPos-ZPosDesign);
-	  grZDev->SetPoint(iCh,ZPosDesign,PhiPosDesign,ZPos-ZPosDesign);
+	  grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZPos-ZPosDesign);
+	  grZDev->SetPoint(grZDev->GetN(),ZPosDesign,PhiPosDesign,ZPos-ZPosDesign);
 	}else{
 	  ZPosGapAllch[iCh]=-100;
 	  ZChiSqAllch[iCh]=-100;
@@ -124,9 +124,9 @@ void UCI_makeplots(){
 	}
 	//	}
 
-	if(PhiMeasured==true&&PhiDataQual==true&&PhiPosDesign>10){
+	if(PhiMeasured==true&&PhiDataQual==true){
 	  PhiPosGapAllch[iCh]=PhiPos-PhiPosDesign;
-	  grPhiDev->SetPoint(iCh,ZPosDesign,PhiPosDesign,PhiPos-PhiPosDesign);
+	  grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiPos-PhiPosDesign);
 	}else{
 	  PhiPosGapAllch[iCh]=-100;
 	  former=false;
@@ -140,27 +140,30 @@ void UCI_makeplots(){
   // ptPhi->AddText("#phi_{calc}-#phi_{design}");
   // ptPhi->Draw();
   // InnerGeometry(PhiPosGapAllch,-0.5,0.5);
-  grPhiDev->SetTitle("#Phi Deviation;Z_{nom};#phi_{nom};#phi_{calc}-#phi_{nom}");
+  grPhiDev->SetTitle("#Phi Deviation;Z_{nom}[mm];#phi_{nom}[deg];#phi_{calc}-#phi_{nom}[deg]");
+  grPhiDev->GetXaxis()->SetLimits(-300,300);
+  grPhiDev->GetYaxis()->SetLimits(100,250);
   grPhiDev->SetMaximum(0.6);
   grPhiDev->SetMinimum(-0.2);
   grPhiDev->SetMarkerStyle(20);
   grPhiDev->Draw("pcol");
   
-  canvas2->cd();
-  TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
-  ptZ->AddText("Z_{calc}-Z_{design}");
-  ptZ->Draw();
-  //InnerGeometryArrow(ZPosGapAllch,ZMeasuredAllch,-10.0,0.0);
-  InnerGeometry(ZPosGapAllch,-10.0,0.0);
+  // canvas2->cd();
+  // TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
+  // ptZ->AddText("Z_{calc}-Z_{design}");
+  // ptZ->Draw();
+  // //InnerGeometryArrow(ZPosGapAllch,ZMeasuredAllch,-10.0,0.0);
+  // InnerGeometry(ZPosGapAllch,-10.0,0.0);
   
-  canvas3->cd();
-  grChZPos->SetTitle("Gap from the design value;channel;Gap[mm]");
-  grChZPos->Draw("ap");
-  canvas4->cd();
+  // canvas3->cd();
+  // grChZPos->SetTitle("Gap from the design value;channel;Gap[mm]");
+  // grChZPos->Draw("ap");
+  canvas2->cd();
   //InnerGeometry(ZChiSqAllch,0,2000);
   //grZDev->SetTitle("#Phi Deviation;Z_{nom};#phi_{nom};Z_{calc}-Z_{nom}");
-  grZDev->GetZaxis()->SetLimits(-150,150);
-  grZDev->GetYaxis()->SetLimits(120,240);
+  grZDev->SetTitle("Z Deviation;Z_{nom}[mm];#phi_{nom}[deg];Z_{calc}-Z_{nom}[mm]");
+  grZDev->GetXaxis()->SetLimits(-300,300);
+  grZDev->GetYaxis()->SetLimits(100,250);
   grZDev->SetMarkerStyle(20);
   grZDev->SetMaximum(2);
   grZDev->SetMinimum(-8);
@@ -172,9 +175,9 @@ void UCI_makeplots(){
 	grGapCor->SetMaximum(10);
 	grGapCor->Draw("ap");
   */
-  canvas5->cd();
-  canvas5->SetGrid(0,0);
-  gStyle->SetFuncColor(kRed);
-  WidthHist->Fit("gaus");
-  WidthHist->Draw();
+  // canvas5->cd();
+  // canvas5->SetGrid(0,0);
+  // gStyle->SetFuncColor(kRed);
+  // WidthHist->Fit("gaus");
+  // WidthHist->Draw();
 }
