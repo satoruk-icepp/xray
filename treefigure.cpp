@@ -1,7 +1,7 @@
 #include "DataQual.h"
 void treefigure(){
   TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_tg.root","READ");
-  TTree *txray = (TTree*)frec->Get("xrayac");
+  TTree *txray = (TTree*)frec->Get("txray");
   TCanvas* canvasZ= new TCanvas("canvasZ","canvasZ",800,600);
   TCanvas* canvasPhi= new TCanvas("canvasPhi","canvasPhi",800,600);
   Bool_t ZMeasured;

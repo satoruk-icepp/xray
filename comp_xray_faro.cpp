@@ -16,6 +16,9 @@
 #define Nfitparam 5
 
 void comp_xray_faro(){
+  gStyle->SetTitleOffset( 2,"XYZ");
+  gStyle->SetTitleSize( 0.03,"XYZ");
+  gStyle->SetLabelSize( 0.03,"XYZ");
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
 
@@ -95,30 +98,34 @@ void comp_xray_faro(){
 	if(DataQual(ZErr,false,XrayZPos,ZPosDesign)==true){
 	  ZDataQual=true;
 	}
-	if(ZMeasured==true&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
-	  //grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
-	  //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
-	  grXFZ2D->SetPoint(grXFZ2D->GetN(),ZPosDesign,PhiPosDesign,XrayZPos-FaroZPos);
-	}
+
 
 	Bool_t PhiDataQual=false;
 	//if(PhiChiSq<5000){
-	if(DataQual(PhiErr,true,PhiResult[0],PhiPosDesign)==true){
+	if(DataQual(PhiErr,true,XrayPhiPos,PhiPosDesign)==true){
 	  PhiDataQual=true;
 	}
 
-	if(PhiMeasured==true&&FaroDataQual==true&&PhiDataQual==true){
-	  grXFPhi2D->SetPoint(grXFPhi2D->GetN(),ZPosDesign,PhiPosDesign,XrayPhiPos-FaroPhiPos);
+	if(PhiMeasured==true&&ZMeasured==true&&PhiDataQual&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
+	  //grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
+	  //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
+	  grXFZ2D->SetPoint(grXFZ2D->GetN(),XrayZPos,XrayPhiPos,XrayZPos-FaroZPos);
+	}
+
+	if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true){
+	  grXFPhi2D->SetPoint(grXFPhi2D->GetN(),XrayZPos,XrayPhiPos,XrayPhiPos-FaroPhiPos);
 	}
   }
 
   canvas1->cd();
   grXFPhi2D->SetMarkerStyle(20);
   grXFPhi2D->SetMinimum(0);
+  grXFPhi2D->SetTitle("#Phi Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];#phi_{Xray}-#phi_{Faro}[deg]");
   grXFPhi2D->Draw("pcol");
   
   canvas2->cd();
   grXFZ2D->SetMarkerStyle(20);
+  grXFZ2D->SetTitle("Z Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];Z_{Xray}-Z_{Faro}[mm]");
   grXFZ2D->Draw("pcol");
 
 }

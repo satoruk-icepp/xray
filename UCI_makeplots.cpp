@@ -118,11 +118,9 @@ void UCI_makeplots(){
 	}
 
 	Bool_t PhiDataQual=false;
-	//if(PhiChiSq<5000){
 	if(DataQual(PhiErr,true,PhiResult[0],PhiPosDesign)==true){
 	  PhiDataQual=true;
 	}
-	//	}
 
 	if(PhiMeasured==true&&PhiDataQual==true){
 	  grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiResult[0]-PhiPosDesign);
