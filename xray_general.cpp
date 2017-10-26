@@ -3,34 +3,45 @@
 void xray_general(){
   //TCanvas* canvas1=new TCanvas("canvas1","map",600,600);
 
-  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch_dg.root","RECREATE");
+  TFile *fall =new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_dg.root","RECREATE");
   TTree *tall =new TTree("xrayac","xrayac");
   //TGraphErrors* grPhiPosAllch =new TGraphErrors();
   Int_t ChNum;
 
-  Double_t OneChXPos;
-  Double_t OneChYPos;
+  Double_t XPos;
+  Double_t YPos;
 
-  Double_t OneChPhiPos;
-  Double_t OneChPhiPosDesign;
-  Double_t OneChPhiPosErr;
+  Double_t PhiPos;
+  Double_t PhiPosDesign;
+  Double_t PhiFitErr[5];
+  Double_t PhiChiSq;
+  Bool_t PhiMeasured;
 
-  Double_t OneChZPos;
-  Double_t OneChZPosDesign;
-  Double_t OneChZPosErr;
+  Double_t ZPos;
+  Double_t ZPosDesign;
+  Double_t ZFitErr[5];
+  Double_t ZChiSq;
+  Bool_t ZMeasured;
 
   tall->Branch("ChNum",&ChNum);
 
-  tall->Branch("XPos",&OneChXPos);
-  tall->Branch("YPos",&OneChYPos);
+  tall->Branch("XPos",&XPos);
+  tall->Branch("YPos",&YPos);
 
-  tall->Branch("PhiPos",&OneChPhiPos);
-  tall->Branch("PhiPosDesign",&OneChPhiPosDesign);
-  tall->Branch("PhiPosErr",& OneChPhiPosErr);
+  tall->Branch("PhiPos",&PhiPos);
+  tall->Branch("PhiPosDesign",&PhiPosDesign);
+  tall->Branch("PhiChiSq",&PhiChiSq);
+  tall->Branch("PhiMeasured",&PhiMeasured);
 
-  tall->Branch("ZPos",&OneChZPos);
-  tall->Branch("ZPosDesign",&OneChZPosDesign);
-  tall->Branch("ZPosErr",& OneChZPosErr);
+  tall->Branch("ZPos",&ZPos);
+  tall->Branch("ZPosDesign",&ZPosDesign);
+  tall->Branch("ZChiSq",&ZChiSq);
+  tall->Branch("ZMeasured",&ZMeasured);
+
+  for(int i=0;i<Nfitparam;i++){
+	tall->Branch(Form("PhiFitErr%d",i),&PhiFitErr[i]);
+	tall->Branch(Form("ZFitErr%d",i),&ZFitErr[i]);
+  }
 
   for(int i=0;i<PhiRunNum;i++){
     OneRunAnalysis(PhiRunList[i],true);
@@ -45,17 +56,21 @@ void xray_general(){
   for(int iCh=0;iCh<nMPPC;iCh++){
     ChNum=iCh;
 
-	OneChXPos=XPosAllch[iCh];
-	OneChYPos=YPosAllch[iCh];
+	XPos=XPosAllch[iCh];
+	YPos=YPosAllch[iCh];
 	//Phi Position
-    OneChPhiPos=PhiPosAllch[iCh];
-    OneChPhiPosDesign=PhiPosDesignAllch[iCh];
+    PhiPos=PhiPosAllch[iCh];
+    PhiPosDesign=PhiPosDesignAllch[iCh];
+    PhiChiSq=PhiChiSqAllch[iCh];
+	PhiMeasured=PhiMeasuredAllch[iCh];
 	//Z Position
-	OneChZPos=ZPosAllch[iCh];
-    OneChZPosDesign=ZPosDesignAllch[iCh];
-	for(i=0;i<5;i++){
-    OneChPhiPosErr=PhiFitErrAllch[iCh][i];
-    OneChZPosErr=ZFitErrAllch[iCh][i];
+	ZPos=ZPosAllch[iCh];
+    ZPosDesign=ZPosDesignAllch[iCh];
+    ZChiSq=ZChiSqAllch[iCh];
+	ZMeasured=ZMeasuredAllch[iCh];
+	for(int i=0;i<5;i++){
+	  PhiFitErr[i]=PhiFitErrAllch[iCh][i];
+	  ZFitErr[i]=ZFitErrAllch[iCh][i];
 	}
     tall->Fill();
   }

@@ -13,8 +13,7 @@
 #define kNchforXray 272
 #define NRow 93
 #define NLine 44
-
-void OneRunAnalysis(int run, Bool_t PhiScan);
+#define Nfitparam 5
 
 Double_t XPosAllch[nMPPC];
 Double_t YPosAllch[nMPPC];
@@ -22,15 +21,19 @@ Double_t YPosAllch[nMPPC];
 Double_t PhiPosAllch[nMPPC];
 Double_t PhiPosDesignAllch[nMPPC];
 Double_t PhiFitErrAllch[nMPPC][5];
+Double_t PhiChiSqAllch[nMPPC];
+Bool_t PhiMeasuredAllch[nMPPC];
 
 Double_t ZPosAllch[nMPPC];
 Double_t ZPosDesignAllch[nMPPC];
 Double_t ZFitErrAllch[nMPPC][5];
+Double_t ZChiSqAllch[nMPPC];
+Bool_t ZMeasuredAllch[nMPPC];
 
 Int_t PhiRunNum=sizeof(PhiRunList)/sizeof(PhiRunList[0]);
 Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 
-void OneRunAnalysis(int run,Bool_t PhiScan) {
+void OneRunAnalysis(int run,Bool_t PhiScan/*, Bool_t visualize =false*/) {
   Int_t SiPMchNum;
   Double_t Pos;
   Double_t PosDesign;
@@ -126,12 +129,14 @@ void OneRunAnalysis(int run,Bool_t PhiScan) {
 		FitFunc[iScalerCh]->SetParLimits(1,0,2);
 		FitFunc[iScalerCh]->SetParLimits(2,0,2);
 		FitFunc[iScalerCh]->SetParLimits(3,0,80);
-		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],0.6,0.1,30);
+		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],0.7,0.2,80,60);
 		grScaler[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MNQ");
 		Pos=FitFunc[iScalerCh]->GetParameter(0);
 		PosDesign=MPPCPhi[iScalerCh];
 		PhiPosAllch[ChNum]=Pos;
 		PhiPosDesignAllch[ChNum]=MPPCPhi[iScalerCh];
+		PhiChiSqAllch[ChNum]=FitFunc[iScalerCh]->GetChisquare();
+		PhiMeasuredAllch[ChNum]=true;
 		for(int i=0;i<5;i++){
 		  PhiFitErr[i]=FitFunc[iScalerCh]->GetParError(i);
 		  PhiFitErrAllch[ChNum][i]=PhiFitErr[i];
@@ -141,13 +146,15 @@ void OneRunAnalysis(int run,Bool_t PhiScan) {
 		FitFunc[iScalerCh]->SetParLimits(0,MPPCXYZ[iScalerCh][2]-15,MPPCXYZ[iScalerCh][2]+15);	
 		FitFunc[iScalerCh]->SetParLimits(1,0,15);
 		FitFunc[iScalerCh]->SetParLimits(2,0,25);
-		FitFunc[iScalerCh]->SetParLimits(3,0,80);
-		FitFunc[iScalerCh]->SetParameters(MPPCXYZ[iScalerCh][2],10,18,40);
+		FitFunc[iScalerCh]->SetParLimits(3,0,1000);
+		FitFunc[iScalerCh]->SetParameters(MPPCXYZ[iScalerCh][2],10,2,80,40);
 		grScaler[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MNQ");
 		Pos=FitFunc[iScalerCh]->GetParameter(0);
 		PosDesign=MPPCXYZ[iScalerCh][2];
 		ZPosAllch[ChNum]=Pos;
 		ZPosDesignAllch[ChNum]=MPPCXYZ[iScalerCh][2];
+		ZChiSqAllch[ChNum]=FitFunc[iScalerCh]->GetChisquare();
+		ZMeasuredAllch[ChNum]=true;
 		for(int i=0;i<5;i++){
 		  ZFitErr[i]=FitFunc[iScalerCh]->GetParError(i);
 		  ZFitErrAllch[ChNum][i]=ZFitErr[i];

@@ -28,8 +28,10 @@ void UCI_makeplots(){
   // TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
   // TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
-  TTree *txray = (TTree*)frec->Get("uci");
+  //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
+TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_allch_dg.root","READ");
+//TTree *txray = (TTree*)frec->Get("uci");
+TTree *txray = (TTree*)frec->Get("xrayac");
 
   TGraph* grChZPos=new TGraph();
   TGraph* grGapCor=new TGraph();
