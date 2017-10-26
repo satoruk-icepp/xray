@@ -20,13 +20,15 @@ Double_t YPosAllch[nMPPC];
 
 Double_t PhiPosAllch[nMPPC];
 Double_t PhiPosDesignAllch[nMPPC];
-Double_t PhiFitErrAllch[nMPPC][5];
+Double_t PhiFitResultAllch[nMPPC][Nfitparam];
+Double_t PhiFitErrAllch[nMPPC][Nfitparam];
 Double_t PhiChiSqAllch[nMPPC];
 Bool_t PhiMeasuredAllch[nMPPC];
 
 Double_t ZPosAllch[nMPPC];
 Double_t ZPosDesignAllch[nMPPC];
-Double_t ZFitErrAllch[nMPPC][5];
+Double_t ZFitResultAllch[nMPPC][Nfitparam];
+Double_t ZFitErrAllch[nMPPC][Nfitparam];
 Double_t ZChiSqAllch[nMPPC];
 Bool_t ZMeasuredAllch[nMPPC];
 
@@ -37,8 +39,8 @@ void RawRunAnalysis(int run,Bool_t PhiScan, Bool_t visualize =false) {
   Int_t ChNum;
   Double_t Pos;
   Double_t PosDesign;
-  Double_t PhiFitErr[5];
-  Double_t ZFitErr[5];
+  Double_t PhiFitErr[Nfitparam];
+  Double_t ZFitErr[Nfitparam];
 
   /*-----Define rec tree to be read----*/
   TFile *frec = new TFile(Form("$(MEG2SYS)/analyzer/x-ray/recfiles/rec%06d.root", run),"READ");
@@ -126,10 +128,10 @@ void RawRunAnalysis(int run,Bool_t PhiScan, Bool_t visualize =false) {
       if(PhiScan==true){
 		FitFunc[iScalerCh]->SetRange(MPPCPhi[iScalerCh]-15,MPPCPhi[iScalerCh]+15);
 		FitFunc[iScalerCh]->SetParLimits(0,MPPCPhi[iScalerCh]-5,MPPCPhi[iScalerCh]+5);
-		FitFunc[iScalerCh]->SetParLimits(1,0,2);
-		FitFunc[iScalerCh]->SetParLimits(2,0,2);
+		FitFunc[iScalerCh]->SetParLimits(1,0,5);
+		FitFunc[iScalerCh]->SetParLimits(2,0,5);
 		FitFunc[iScalerCh]->SetParLimits(3,0,80);
-		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],0.7,0.2,80,60);
+		FitFunc[iScalerCh]->SetParameters(MPPCPhi[iScalerCh],0.7,0.2,10,60);
 		grScaler[iScalerCh]->Fit(Form("fit%d",iScalerCh),"MNQ");
 		Pos=FitFunc[iScalerCh]->GetParameter(0);
 		PosDesign=MPPCPhi[iScalerCh];
@@ -138,6 +140,7 @@ void RawRunAnalysis(int run,Bool_t PhiScan, Bool_t visualize =false) {
 		PhiChiSqAllch[ChNum]=FitFunc[iScalerCh]->GetChisquare();
 		PhiMeasuredAllch[ChNum]=true;
 		for(int i=0;i<5;i++){
+		  PhiFitResultAllch[ChNum][i]=FitFunc[iScalerCh]->GetParameter(i);
 		  PhiFitErr[i]=FitFunc[iScalerCh]->GetParError(i);
 		  PhiFitErrAllch[ChNum][i]=PhiFitErr[i];
 		}
@@ -161,11 +164,12 @@ void RawRunAnalysis(int run,Bool_t PhiScan, Bool_t visualize =false) {
 		ZChiSqAllch[ChNum]=FitFunc[iScalerCh]->GetChisquare();
 		ZMeasuredAllch[ChNum]=true;
 		for(int i=0;i<5;i++){
+		  ZFitResultAllch[nMPPC][i]=FitFunc[iScalerCh]->GetParameter(i);
 		  ZFitErr[i]=FitFunc[iScalerCh]->GetParError(i);
 		  ZFitErrAllch[ChNum][i]=ZFitErr[i];
 		}
 		if(visualize==true){
-		  std::cout<<"Channel: "<<ChNum<<" Position: "<<Pos<<std::endl;
+		  std::cout<<"iScalerCh: "<<iScalerCh<<" Channel: "<<ChNum<<" Position: "<<Pos<<std::endl;
 		}
       }
     }

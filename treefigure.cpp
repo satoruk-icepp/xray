@@ -1,7 +1,7 @@
 #include "DataQual.h"
 void treefigure(){
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
-  TTree *txray = (TTree*)frec->Get("uci");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_dg.root","READ");
+  TTree *txray = (TTree*)frec->Get("xrayac");
   TCanvas* canvasZ= new TCanvas("canvasZ","canvasZ",800,600);
   TCanvas* canvasPhi= new TCanvas("canvasPhi","canvasPhi",800,600);
   Bool_t ZMeasured;
@@ -18,7 +18,7 @@ void treefigure(){
   TH1D* ZErrHist[5];
   TH1D* PhiErrHist[5];
  
-  Double_t ZHistMax[5]={1,4,4,5,1};
+  Double_t ZHistMax[5]={1,4,4,200,1};
   Double_t PhiHistMax[5]={0.1,0.4,0.4,16,0.8};
   for(int i=0;i<5;i++){
 	TString Parameter;

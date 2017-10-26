@@ -1,5 +1,5 @@
 Double_t PhiQCut[5]={0.05,0.2,0.2,8,0.4};
-Double_t ZQCut[5]={0.5,2,2,3,0.5};
+Double_t ZQCut[5]={0.5,2,2,100,0.5};
 
 Bool_t DataQual(Double_t *FitErr, Bool_t PhiScan, Double_t Position, Double_t Design){
   Bool_t Quality=true;

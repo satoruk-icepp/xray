@@ -26,12 +26,12 @@ void UCI_makeplots(){
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
   // TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
   // TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
-  // TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
+  TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
   //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_allch_tg.root","READ");
-TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_dg.root","READ");
-//TTree *txray = (TTree*)frec->Get("uci");
-TTree *txray = (TTree*)frec->Get("xrayac");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_raw_dg.root","READ");
+  //TTree *txray = (TTree*)frec->Get("uci");
+  TTree *txray = (TTree*)frec->Get("xrayac");
 
   TGraph* grChZPos=new TGraph();
   TGraph* grGapCor=new TGraph();
@@ -89,12 +89,12 @@ TTree *txray = (TTree*)frec->Get("xrayac");
 		ZPosDesign=ZPosDesign+CFRPGap[i];
 	  }
 	}
-	Bool_t ZDataQual=true;
+	Bool_t ZDataQual=false;
 	if(DataQual(ZErr,false,ZPos,ZPosDesign)==true){
 	  ZDataQual=true;
 	}
 
-	if(ZMeasured==true&&ZDataQual==true){
+	if(ZMeasured==true&&ZDataQual==true&&std::abs(ZPos)<120){
 	  if(former==true){
 		WidthHist->Fill(ZPos-tmpzpos);
 		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
@@ -177,9 +177,9 @@ TTree *txray = (TTree*)frec->Get("xrayac");
 	grGapCor->SetMaximum(10);
 	grGapCor->Draw("ap");
   */
-  // canvas5->cd();
-  // canvas5->SetGrid(0,0);
-  // gStyle->SetFuncColor(kRed);
-  // WidthHist->Fit("gaus");
-  // WidthHist->Draw();
+  canvas5->cd();
+  canvas5->SetGrid(0,0);
+  gStyle->SetFuncColor(kRed);
+  WidthHist->Fit("gaus");
+  WidthHist->Draw();
 }
