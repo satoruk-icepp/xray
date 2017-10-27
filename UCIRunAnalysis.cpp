@@ -110,9 +110,18 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
 	  }
 	}	
 	if(visualize==true){
-	  std::cout<<"Channel: "<<ChNum<<" Position: "<<FitResult[0]<<std::endl;	
+	  std::cout<<"mppc"<<i<<"Channel: "<<ChNum<<"row: "<<ChNum/44<<"line: "<<ChNum%44<<" Position: "<<FitResult[0]<<std::endl;	
 	}
   }
+  if(visualize==true){
+	Int_t visch;
+	std::cout<<"channel to visualize: ";
+	std::cin>>visch;
+	grScaler[visch]->Draw("ap");
+	FitFunc[visch]->SetLineColor(kRed);
+	FitFunc[visch]->Draw("same");
+  }
+
   return;
 }
 

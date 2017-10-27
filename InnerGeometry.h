@@ -17,7 +17,7 @@ int colordtm(Double_t value,Double_t vmin, Double_t vmax){
   return color;
 }
 
-void InnerGeometry(Double_t *PropertyAllSiPM,Bool_t *validSiPM,Double_t Min,Double_t Max){
+void InnerGeometry(Double_t *PropertyAllSiPM,Bool_t *MeasuredSiPM,Bool_t *validSiPM,Double_t Min,Double_t Max){
   TArrow* Zaxisar= new TArrow(0.1,0.05,0.2,0.05);
   TText* Zaxisdesc= new TText(0.1,0,"Z");
   Zaxisar->Draw();
@@ -53,8 +53,13 @@ void InnerGeometry(Double_t *PropertyAllSiPM,Bool_t *validSiPM,Double_t Min,Doub
 	  //chnum.Form("%d",i*NRow+j);
 	  //TText *t=new TText(OneBoxXmin,OneBoxYmin,chnum);
 	  Int_t Color=1;
+	  Int_t FillStyle=1001;
 	  if(validSiPM[ChNum]==true){
 		Color=colordtm(PropertyAllSiPM[ChNum],Min,Max);
+	  }
+	  if(MeasuredSiPM[ChNum]==false){
+		Color=15;
+		FillStyle=3244;
 	  }
 	  b->SetFillColor(Color);
 	  b->Draw();

@@ -15,9 +15,20 @@
 #define Nfitparam 5
 
 Double_t ZPosDevAllch[nMPPC];
-Double_t PhiPosGapAllch[nMPPC];
 Double_t ZChiSqAllch[nMPPC];
+Bool_t ZMeasuredAllch[nMPPC];
 Bool_t ZValidAllch[nMPPC];
+ Double_t ZPosErrAllch[nMPPC];
+
+
+ Bool_t PhiMeasuredAllch[nMPPC];
+ Bool_t PhiValidAllch[nMPPC];
+ Double_t PhiPosDevAllch[nMPPC];
+ Double_t PhiChiSqAllch[nMPPC];
+
+
+ Bool_t AllTrue[nMPPC];
+
 
 void UCI_makeplots(){
   // gStyle->SetTitleOffset( 2,"XYZ");
@@ -25,8 +36,8 @@ void UCI_makeplots(){
   // gStyle->SetLabelSize( 0.03,"XYZ");
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,800);
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,800);
-  // TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
-  // TCanvas* canvas4=new TCanvas("canvas4","Gap Correlation",600,600);
+  TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
+  TCanvas* canvas4=new TCanvas("canvas4","Chi Square",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
   //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_tg.root","READ");
@@ -85,6 +96,12 @@ void UCI_makeplots(){
   for(int iCh=0;iCh<nMPPC;iCh++){
 	txray->GetEntry(iCh);
 	Double_t ZPos=ZResult[0];
+	Double_t PhiPos=PhiResult[0];
+	ZChiSqAllch[iCh]=ZChiSq;
+	ZMeasuredAllch[iCh]=ZMeasured;
+	ZPosErrAllch[iCh]=ZResult[2];
+	PhiChiSqAllch[iCh]=PhiChiSq;
+	PhiMeasuredAllch[iCh]=PhiMeasured;
 
 	Int_t chline=floor(iCh/NLine);
 	for(int i=0;i<4;i++){
@@ -93,8 +110,20 @@ void UCI_makeplots(){
 	  }
 	}
 	Bool_t ZDataQual=false;
-	if(DataQual(ZErr,false,ZResult[0],ZPosDesign)==true){
-	  ZDataQual=true;
+	if(FitQual(ZErr,false)==true){
+	  if(DevQual(ZPos,ZPosDesign,false)==true){
+		ZDataQual=true;
+	  }
+	}
+	Bool_t PhiDataQual=false;
+	if(FitQual(PhiErr,true)==true){
+	  if(DevQual(PhiPos,PhiPosDesign,true)==true){
+		PhiDataQual=true;
+	  }else{
+		std::cout<<"Calculated position is deviated: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
+	  }
+	}else{
+	  std::cout<< "Fit Quality Cut: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
 	}
 
 	if(ZMeasured==true&&ZDataQual==true&&std::abs(ZResult[0])<120){
@@ -119,16 +148,18 @@ void UCI_makeplots(){
 	  former=false;
 	}
 
-	Bool_t PhiDataQual=false;
-	if(DataQual(PhiErr,true,PhiResult[0],PhiPosDesign)==true){
-	  PhiDataQual=true;
-	}
-
 	if(PhiMeasured==true&&PhiDataQual==true&&std::abs(ZResult[0])<120&&ZDataQual==true){
+	  PhiPosDevAllch[iCh]=PhiPos-PhiPosDesign;
+	  PhiValidAllch[iCh]=true;
 	  grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiResult[0]-PhiPosDesign);
 	}else{
 	  former=false;
 	}
+	AllTrue[iCh]=true;
+	if(ZChiSq>1000){
+	  //	  std::cout <<"Chi Square is larger than 1000 : "<<iCh<<std::endl;
+	}
+
   }
 
 
@@ -144,17 +175,15 @@ void UCI_makeplots(){
   grPhiDev->SetMinimum(-0.1);
   grPhiDev->SetMarkerStyle(21);
   grPhiDev->SetMarkerSize(1);
-  grPhiDev->Draw("pcol");
-  gPad->Modified(); gPad->Update(); // make sure it's really (re-)drawn
-  gPad->GetView()->TopView();
-  
+  //grPhiDev->Draw("pcol");
+  InnerGeometry(PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
   // canvas2->cd();
   // TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
   // ptZ->AddText("Z_{calc}-Z_{design}");
   // ptZ->Draw();
   // //InnerGeometryArrow(ZPosDevAllch,ZvalidAllch,-10.0,0.0);
   // InnerGeometry(ZPosDevAllch,-10.0,0.0);
-  
+
   // canvas3->cd();
   // grChZPos->SetTitle("Gap from the design value;channel;Gap[mm]");
   // grChZPos->Draw("ap");
@@ -168,8 +197,13 @@ void UCI_makeplots(){
   grZDev->SetMaximum(0);
   grZDev->SetMinimum(-8);
   //  grZDev->Draw("colz");
-  InnerGeometry(ZPosDevAllch,ZValidAllch,-10.0,0.0);
+  InnerGeometry(ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
 
+  canvas3->cd();
+  InnerGeometry(PhiChiSqAllch,PhiMeasuredAllch,AllTrue ,0.0,2000.0);
+
+  canvas4->cd();
+  InnerGeometry(ZPosErrAllch,ZMeasuredAllch,AllTrue ,0.0,20.0);
   /*
 	grGapCor->GetXaxis()->SetLimits(-10,10);
 	grGapCor->SetMinimum(-10);
