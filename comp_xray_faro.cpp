@@ -21,6 +21,7 @@ void comp_xray_faro(){
   gStyle->SetLabelSize( 0.03,"XYZ");
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
+  TCanvas* canvas3=new TCanvas("canvas3","deformation",600,600);
 
   TString xraydatapath = "$(MEG2SYS)/analyzer/x-ray/";
   TString xrayfilename = "xray_UCI_tg.root";
@@ -38,6 +39,7 @@ void comp_xray_faro(){
   TGraph* grXrayFaroCor=new TGraph();
   TGraph2D* grXFZ2D = new TGraph2D();
   TGraph2D* grXFPhi2D = new TGraph2D();
+  TGraph* grXFPhi1DPhi= new TGraph();
   TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",400,0,20);
   //WidthHist->SetStats(0); //非表示
 
@@ -113,6 +115,7 @@ void comp_xray_faro(){
 	}
 
 	if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true){
+	  grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),XrayPhiPos,XrayPhiPos-FaroPhiPos);
 	  grXFPhi2D->SetPoint(grXFPhi2D->GetN(),XrayZPos,XrayPhiPos,XrayPhiPos-FaroPhiPos);
 	}
   }
@@ -128,4 +131,10 @@ void comp_xray_faro(){
   grXFZ2D->SetTitle("Z Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];Z_{Xray}-Z_{Faro}[mm]");
   grXFZ2D->Draw("pcol");
 
+  canvas3->cd();
+  grXFPhi1DPhi->SetTitle("#phi deviation;#phi_{X-ray}[deg];#phi_{X-ray}-#phi_{Faro}[deg]");
+  grXFPhi1DPhi->SetMinimum(0);
+  grXFPhi1DPhi->SetMarkerStyle(20);
+  grXFPhi1DPhi->SetMarkerColor(kRed);
+  grXFPhi1DPhi->Draw("ap");
 }

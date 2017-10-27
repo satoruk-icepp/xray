@@ -57,8 +57,9 @@ void make3Dplot(){
   for(int iCh=0;iCh<nMPPC;iCh++){
 	tfaro->GetEntry(iCh);
 	if(FaroDataQual==true){
+	  geometry->SetPoint(geometry->GetN(),FaroZPos,FaroXPos,FaroYPos);
 	}
-	geometry->SetPoint(iCh,FaroZPos,FaroXPos,FaroYPos);
+
 
   }
 
