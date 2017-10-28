@@ -23,7 +23,7 @@ void comp_xray_faro(){
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
   TCanvas* canvas3=new TCanvas("canvas3","deformation",600,600);
 
-  TString xraydatapath = "$(MEG2SYS)/analyzer/x-ray/";
+  TString xraydatapath = "$(MEG2SYS)/analyzer/macros/xec/xray/";
   TString xrayfilename = "xray_UCI_tg.root";
   TString xrayrootfile = xraydatapath + xrayfilename;
   TFile *fxray = new TFile(xrayrootfile.Data(),"READ");
