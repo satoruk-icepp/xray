@@ -53,8 +53,8 @@ void make3Dplot(){
   tfaro->SetBranchAddress("YPos",&FaroYPos);
   tfaro->SetBranchAddress("ZPos",&FaroZPos);
   tfaro->SetBranchAddress("DataQual",&FaroDataQual);
-
-  for(int iCh=0;iCh<nMPPC;iCh++){
+  Int_t Nwf=tfaro->GetEntries();
+  for(int iCh=0;iCh<Nwf;iCh++){
 	tfaro->GetEntry(iCh);
 	if(FaroDataQual==true){
 	  geometry->SetPoint(geometry->GetN(),FaroZPos,FaroXPos,FaroYPos);
