@@ -35,8 +35,8 @@ void comp_xray_faro(){
   TFile* ffaro = new TFile(farorootfile.Data(),"read");
   TTree* tfaro = (TTree*)ffaro->Get("faro");
 
-  TGraph* grChZPos=new TGraph();
-  TGraph* grXrayFaroCor=new TGraph();
+  TGraph* grChZPos = new TGraph();
+  TGraph* grXrayFaroCor = new TGraph();
   TGraph2D* grXFZ2D = new TGraph2D();
   TGraph2D* grXFPhi2D = new TGraph2D();
   TGraph* grXFPhi1DPhi= new TGraph();
@@ -96,22 +96,22 @@ void comp_xray_faro(){
 	Double_t XrayZPos = ZResult[0];
 	Double_t XrayPhiPos = PhiResult[0];
 	Double_t FaroPhiPos = XYZ2Phi(FaroXPos,FaroYPos,FaroZPos);
-	Bool_t ZDataQual=false;
-	if(DataQual(ZErr,false,XrayZPos,ZPosDesign)==true){
+	Bool_t ZDataQual=true;
+	if(FitQual(ZErr,false)==true){
 	  ZDataQual=true;
 	}
 
 
-	Bool_t PhiDataQual=false;
+	Bool_t PhiDataQual=true;
 	//if(PhiChiSq<5000){
-	if(DataQual(PhiErr,true,XrayPhiPos,PhiPosDesign)==true){
+	if(FitQual(PhiErr,true)==true){
 	  PhiDataQual=true;
 	}
 
 	if(PhiMeasured==true&&ZMeasured==true&&PhiDataQual&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
 	  //grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
 	  //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
-	  grXFZ2D->SetPoint(grXFZ2D->GetN(),XrayZPos,XrayPhiPos,XrayZPos-FaroZPos);
+	  grXFZ2D->SetPoint(grXFZ2D->GetN(),ZPosDesign,PhiPosDesign,XrayZPos-FaroZPos);
 	}
 
 	if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true){
