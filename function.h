@@ -46,3 +46,9 @@ Double_t ArbFunc(Double_t *x,Double_t *par){
   return f;
 }
                                   
+Double_t TDLine(Double_t *x, Double_t *par){
+  Double_t xx = x[0];
+  Double_t yy = x[1];
+  Double_t zz = par[0]*xx+par[1]*yy+par[2];
+  return zz;
+}
