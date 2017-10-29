@@ -21,38 +21,45 @@ void FAROInterpolation(){
   tin->SetBranchAddress("ZPos",&MPPCZPos);
   tin->SetBranchAddress("DataQual",&DataQual);
 
-  TGraph2D* Row3Dplot[NRow];
-  TF2* FitLine[NRow];
+  TGraph* Row3DplotXZ[NRow];
+  TGraph* Row3DplotYZ[NRow];
+  TF1* FitLine[NRow][2];
 
   Int_t Nwf=tin->GetEntries();
   std::cout<<"total channel: "<<Nwf<<std::endl;
   int NMppcRow[NRow]={};
   for(int Row=0; Row<NRow;Row++){
-	Row3Dplot[Row]= new TGraph2D();
-	FitLine[Row] = new TF2(Form("fit%d",Row),TDLine,-800,800,-800,800,3);
+	Row3DplotXZ[Row]= new TGraph();
+	Row3DplotYZ[Row]= new TGraph();
+	for(int dir=0;dir<2;dir++){
+	  FitLine[Row][dir] = new TF1(Form("fit%d_dir%d",Row,dir),"[0]*x+[1]");
+	}
+	//
   }
   for(int i=0;i<Nwf;i++ ){
 	tin->GetEntry(i);
 	Int_t Row = MPPCchannel/NLine;
 	Int_t Column = MPPCchannel%NLine;
 	NMppcRow[Row]+=1;
-	Row3Dplot[Row]->SetPoint(Row3Dplot[Row]->GetN(),MPPCXPos,MPPCYPos,MPPCZPos);
+	Row3DplotXZ[Row]->SetPoint(Row3DplotXZ[Row]->GetN(),MPPCXPos,MPPCZPos);
+	Row3DplotYZ[Row]->SetPoint(Row3DplotYZ[Row]->GetN(),MPPCYPos,MPPCZPos);
   }
   for(int Row=0; Row<NRow;Row++){
 	//	std::cout<<"Row: "<<Row<<" MPPC: "<<NMppcRow[Row]<<std::endl;
-	if(Row3Dplot[Row]!=0){
-	  Row3Dplot[Row]->Fit(Form("fit%d",Row),"NQ");
+	if(NMppcRow[Row]!=0){
+	  Row3DplotXZ[Row]->Fit(Form("fit%d_dir%d",Row,0),"NQ");
+	  Row3DplotYZ[Row]->Fit(Form("fit%d_dir%d",Row,1),"NQ");
 	}
   }
   TCanvas* canvas1=new TCanvas("canvas1","visual",600,600);
   canvas1->cd();
   Int_t VisRow=7;
-  Row3Dplot[VisRow]->SetMaximum(300);
-  Row3Dplot[VisRow]->SetMinimum(-300);
-  Row3Dplot[VisRow]->GetXaxis()->SetLimits(-800,0);
-  Row3Dplot[VisRow]->GetYaxis()->SetLimits(-800,800);
-  Row3Dplot[VisRow]->SetMarkerStyle(20);
-  Row3Dplot[VisRow]->SetMarkerSize(0.5);
-  Row3Dplot[VisRow]->Draw("p0");
-  // FitLine[VisRow]->Draw("same"); 
+  Row3DplotXZ[VisRow]->SetMaximum(300);
+  Row3DplotXZ[VisRow]->SetMinimum(-300);
+  Row3DplotXZ[VisRow]->GetXaxis()->SetLimits(-800,0);
+  Row3DplotXZ[VisRow]->SetMarkerStyle(20);
+  Row3DplotXZ[VisRow]->SetMarkerSize(0.5);
+  Row3DplotXZ[VisRow]->Draw("ap");
+  FitLine[VisRow][0]->SetLineColor(kRed); 
+   FitLine[VisRow][0]->Draw("same"); 
 }
