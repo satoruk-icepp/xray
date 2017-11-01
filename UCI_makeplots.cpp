@@ -18,16 +18,16 @@ Double_t ZPosDevAllch[nMPPC];
 Double_t ZChiSqAllch[nMPPC];
 Bool_t ZMeasuredAllch[nMPPC];
 Bool_t ZValidAllch[nMPPC];
- Double_t ZPosErrAllch[nMPPC];
+Double_t ZPosErrAllch[nMPPC];
 
 
- Bool_t PhiMeasuredAllch[nMPPC];
- Bool_t PhiValidAllch[nMPPC];
- Double_t PhiPosDevAllch[nMPPC];
- Double_t PhiChiSqAllch[nMPPC];
+Bool_t PhiMeasuredAllch[nMPPC];
+Bool_t PhiValidAllch[nMPPC];
+Double_t PhiPosDevAllch[nMPPC];
+Double_t PhiChiSqAllch[nMPPC];
 
 
- Bool_t AllTrue[nMPPC];
+Bool_t AllTrue[nMPPC];
 
 
 void UCI_makeplots(){
@@ -41,7 +41,7 @@ void UCI_makeplots(){
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
   //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_tg.root","READ");
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_tg.root","READ");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_UCI_corr_tg.root","READ");
   //TTree *txray = (TTree*)frec->Get("uci");
   TTree *txray = (TTree*)frec->Get("txray");
   //TTree *txray = (TTree*)frec->Get("xrayac");
@@ -82,10 +82,10 @@ void UCI_makeplots(){
   txray->SetBranchAddress("ZMeasured",&ZMeasured);
 
   for(int i=0;i<5;i++){
-	txray->SetBranchAddress(Form("PhiFitResult%d",i),&PhiResult[i]);
-	txray->SetBranchAddress(Form("PhiFitErr%d",i),&PhiErr[i]);
-	txray->SetBranchAddress(Form("ZFitResult%d",i),&ZResult[i]);
-	txray->SetBranchAddress(Form("ZFitErr%d",i),&ZErr[i]);
+    txray->SetBranchAddress(Form("PhiFitResult%d",i),&PhiResult[i]);
+    txray->SetBranchAddress(Form("PhiFitErr%d",i),&PhiErr[i]);
+    txray->SetBranchAddress(Form("ZFitResult%d",i),&ZResult[i]);
+    txray->SetBranchAddress(Form("ZFitErr%d",i),&ZErr[i]);
   }
 
   Int_t N=txray->GetEntries();
@@ -94,71 +94,71 @@ void UCI_makeplots(){
   Bool_t former=false;
 
   for(int iCh=0;iCh<nMPPC;iCh++){
-	txray->GetEntry(iCh);
-	Double_t ZPos=ZResult[0];
-	Double_t PhiPos=PhiResult[0];
-	ZChiSqAllch[iCh]=ZChiSq;
-	ZMeasuredAllch[iCh]=ZMeasured;
-	ZPosErrAllch[iCh]=ZResult[2];
-	PhiChiSqAllch[iCh]=PhiChiSq;
-	PhiMeasuredAllch[iCh]=PhiMeasured;
+    txray->GetEntry(iCh);
+    Double_t ZPos=ZResult[0];
+    Double_t PhiPos=PhiResult[0];
+    ZChiSqAllch[iCh]=ZChiSq;
+    ZMeasuredAllch[iCh]=ZMeasured;
+    ZPosErrAllch[iCh]=ZResult[2];
+    PhiChiSqAllch[iCh]=PhiChiSq;
+    PhiMeasuredAllch[iCh]=PhiMeasured;
 
-	Int_t chline=floor(iCh/NLine);
-	for(int i=0;i<4;i++){
-	  if(chline>=CFRPOrigin[i]&&chline<CFRPOrigin[i+1]){
-		ZPosDesign=ZPosDesign+CFRPGap[i];
-	  }
-	}
-	Bool_t ZDataQual=false;
-	if(FitQual(ZErr,false)==true){
-	  if(DevQual(ZPos,ZPosDesign,false)==true){
-		ZDataQual=true;
-	  }
-	}
-	Bool_t PhiDataQual=false;
-	if(FitQual(PhiErr,true)==true){
-	  if(DevQual(PhiPos,PhiPosDesign,true)==true){
-		PhiDataQual=true;
-	  }else{
-		std::cout<<"Calculated position is deviated: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
-	  }
-	}else{
-	  std::cout<< "Fit Quality Cut: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
-	}
+    Int_t chline=floor(iCh/NLine);
+    for(int i=0;i<4;i++){
+      if(chline>=CFRPOrigin[i]&&chline<CFRPOrigin[i+1]){
+        ZPosDesign=ZPosDesign+CFRPGap[i];
+      }
+    }
+    Bool_t ZDataQual=false;
+    if(FitQual(ZErr,false)==true){
+      if(DevQual(ZPos,ZPosDesign,false)==true){
+        ZDataQual=true;
+      }
+    }
+    Bool_t PhiDataQual=false;
+    if(FitQual(PhiErr,true)==true){
+      if(DevQual(PhiPos,PhiPosDesign,true)==true){
+        PhiDataQual=true;
+      }else{
+        std::cout<<"Calculated position is deviated: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
+      }
+    }else{
+      std::cout<< "Fit Quality Cut: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
+    }
 
-	if(ZMeasured==true&&ZDataQual==true&&std::abs(ZResult[0])<120){
-	  if(former==true){
-		WidthHist->Fill(ZResult[0]-tmpzpos);
-		//	std::cout<<"factor: "<<cos(theta)<<std::endl;
-		if(ZResult[0]-tmpzpos>17.0){
-		  std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
-		}
-	  }
-	  if(iCh%44!=21){
-		former=true;
-	  }else{
-		former=false;
-	  }
-	  tmpzpos=ZResult[0];
-	  ZPosDevAllch[iCh]=ZPos-ZPosDesign;
-	  ZValidAllch[iCh]=true;
-	  grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZResult[0]-ZPosDesign);
-	  grZDev->SetPoint(grZDev->GetN(),ZPosDesign,PhiPosDesign,ZResult[0]-ZPosDesign);
-	}else{
-	  former=false;
-	}
+    if(ZMeasured==true&&ZDataQual==true&&std::abs(ZResult[0])<120){
+      if(former==true){
+        WidthHist->Fill(ZResult[0]-tmpzpos);
+        //	std::cout<<"factor: "<<cos(theta)<<std::endl;
+        if(ZResult[0]-tmpzpos>17.0){
+          std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
+        }
+      }
+      if(iCh%44!=21){
+        former=true;
+      }else{
+        former=false;
+      }
+      tmpzpos=ZResult[0];
+      ZPosDevAllch[iCh]=ZPos-ZPosDesign;
+      ZValidAllch[iCh]=true;
+      grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZResult[0]-ZPosDesign);
+      grZDev->SetPoint(grZDev->GetN(),ZPosDesign,PhiPosDesign,ZResult[0]-ZPosDesign);
+    }else{
+      former=false;
+    }
 
-	if(PhiMeasured==true&&PhiDataQual==true&&std::abs(ZResult[0])<120&&ZDataQual==true){
-	  PhiPosDevAllch[iCh]=PhiPos-PhiPosDesign;
-	  PhiValidAllch[iCh]=true;
-	  grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiResult[0]-PhiPosDesign);
-	}else{
-	  former=false;
-	}
-	AllTrue[iCh]=true;
-	if(ZChiSq>1000){
-	  //	  std::cout <<"Chi Square is larger than 1000 : "<<iCh<<std::endl;
-	}
+    if(PhiMeasured==true&&PhiDataQual==true&&std::abs(ZResult[0])<120&&ZDataQual==true){
+      PhiPosDevAllch[iCh]=PhiPos-PhiPosDesign;
+      PhiValidAllch[iCh]=true;
+      grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiResult[0]-PhiPosDesign);
+    }else{
+      former=false;
+    }
+    AllTrue[iCh]=true;
+    if(ZChiSq>1000){
+      //	  std::cout <<"Chi Square is larger than 1000 : "<<iCh<<std::endl;
+    }
 
   }
 
@@ -205,11 +205,11 @@ void UCI_makeplots(){
   canvas4->cd();
   InnerGeometry(ZPosErrAllch,ZMeasuredAllch,AllTrue ,0.0,20.0);
   /*
-	grGapCor->GetXaxis()->SetLimits(-10,10);
-	grGapCor->SetMinimum(-10);
-	grGapCor->SetMaximum(10);
-	grGapCor->Draw("ap");
-  */
+     grGapCor->GetXaxis()->SetLimits(-10,10);
+     grGapCor->SetMinimum(-10);
+     grGapCor->SetMaximum(10);
+     grGapCor->Draw("ap");
+     */
   canvas5->cd();
   canvas5->SetGrid(0,0);
   gStyle->SetFuncColor(kRed);

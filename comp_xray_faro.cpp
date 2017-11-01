@@ -15,6 +15,11 @@
 #define NLine 44
 #define Nfitparam 5
 
+Double_t ZPosGapAllch[nMPPC];
+Double_t PhiPosGapAllch[nMPPC];
+Bool_t TrueAllch[nMPPC];
+Bool_t ZValidAllch[nMPPC];
+
 void comp_xray_faro(){
   gStyle->SetTitleOffset( 2,"XYZ");
   gStyle->SetTitleSize( 0.03,"XYZ");
@@ -24,7 +29,7 @@ void comp_xray_faro(){
   TCanvas* canvas3=new TCanvas("canvas3","deformation",600,600);
 
   TString xraydatapath = "$(MEG2SYS)/analyzer/macros/xec/xray/";
-  TString xrayfilename = "xray_UCI_tg.root";
+  TString xrayfilename = "xray_UCI_corr_tg.root";
   TString xrayrootfile = xraydatapath + xrayfilename;
   TFile *fxray = new TFile(xrayrootfile.Data(),"READ");
   TTree *txray = (TTree*)fxray->Get("txray");
@@ -67,11 +72,11 @@ void comp_xray_faro(){
   txray->SetBranchAddress("ZPosDesign",&ZPosDesign);
   txray->SetBranchAddress("ZMeasured",&ZMeasured);
 
-  for(int i=0;i<5;i++){
-	txray->SetBranchAddress(Form("PhiFitResult%d",i),&PhiResult[i]);
-	txray->SetBranchAddress(Form("PhiFitErr%d",i),&PhiErr[i]);
-	txray->SetBranchAddress(Form("ZFitResult%d",i),&ZResult[i]);
-	txray->SetBranchAddress(Form("ZFitErr%d",i),&ZErr[i]);
+  for(int i=0;i<4;i++){
+    txray->SetBranchAddress(Form("PhiFitResult%d",i),&PhiResult[i]);
+    txray->SetBranchAddress(Form("PhiFitErr%d",i),&PhiErr[i]);
+    txray->SetBranchAddress(Form("ZFitResult%d",i),&ZResult[i]);
+    txray->SetBranchAddress(Form("ZFitErr%d",i),&ZErr[i]);
   }
 
   /*faro tree*/
@@ -90,51 +95,60 @@ void comp_xray_faro(){
   std::cout<<"All channels: "<<N<<std::endl;
 
   for(int iCh=0;iCh<nMPPC;iCh++){
-	txray->GetEntry(iCh);
-	tfaro->GetEntry(iCh);
-	Int_t chline=floor(iCh/NLine);
-	Double_t XrayZPos = ZResult[0];
-	Double_t XrayPhiPos = PhiResult[0];
-	Double_t FaroPhiPos = XYZ2Phi(FaroXPos,FaroYPos,FaroZPos);
-	Bool_t ZDataQual=true;
-	if(FitQual(ZErr,false)==true){
-	  ZDataQual=true;
-	}
+    txray->GetEntry(iCh);
+    tfaro->GetEntry(iCh);
+    Int_t chline=floor(iCh/NLine);
+    Double_t XrayZPos = ZResult[0];
+    Double_t XrayPhiPos = PhiResult[0];
+    Double_t FaroPhiPos = XYZ2Phi(FaroXPos,FaroYPos,FaroZPos);
+ TrueAllch[iCh]=true;
+
+    Bool_t ZDataQual=true;
+    if(FitQual(ZErr,false)==true){
+      ZDataQual=true;
+    }
 
 
-	Bool_t PhiDataQual=true;
-	//if(PhiChiSq<5000){
-	if(FitQual(PhiErr,true)==true){
-	  PhiDataQual=true;
-	}
+    Bool_t PhiDataQual=true;
+    //if(PhiChiSq<5000){
+    if(FitQual(PhiErr,true)==true){
+      PhiDataQual=true;
+    }
 
-	if(PhiMeasured==true&&ZMeasured==true&&PhiDataQual&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
-	  //grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
-	  //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
-	  grXFZ2D->SetPoint(grXFZ2D->GetN(),ZPosDesign,PhiPosDesign,XrayZPos-FaroZPos);
-	}
+    if(PhiMeasured==true&&ZMeasured==true&&PhiDataQual&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
+      //grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
+      //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
+      grXFZ2D->SetPoint(grXFZ2D->GetN(),FaroZPos,FaroPhiPos,XrayZPos-FaroZPos);
+      ZPosGapAllch[iCh]=XrayZPos-FaroZPos;
+      ZValidAllch[iCh]=true;
+    }
 
-	if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true){
-	  grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),XrayPhiPos,XrayPhiPos-FaroPhiPos);
-	  grXFPhi2D->SetPoint(grXFPhi2D->GetN(),XrayZPos,XrayPhiPos,XrayPhiPos-FaroPhiPos);
-	}
+    if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true){
+      grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),XrayPhiPos,XrayPhiPos-FaroPhiPos);
+      grXFPhi2D->SetPoint(grXFPhi2D->GetN(),FaroZPos,FaroPhiPos,XrayPhiPos-FaroPhiPos);
+    }
   }
 
   canvas1->cd();
   grXFPhi2D->SetMarkerStyle(20);
-  grXFPhi2D->SetMinimum(0);
+  grXFPhi2D->SetMinimum(-0.5);
+  grXFPhi2D->SetMaximum(0.5);
   grXFPhi2D->SetTitle("#Phi Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];#phi_{Xray}-#phi_{Faro}[deg]");
   grXFPhi2D->Draw("pcol");
   
+
   canvas2->cd();
   grXFZ2D->SetMarkerStyle(20);
+  grXFZ2D->SetMaximum(2);
+  grXFZ2D->SetMinimum(-2);
   grXFZ2D->SetTitle("Z Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];Z_{Xray}-Z_{Faro}[mm]");
-  grXFZ2D->Draw("pcol");
+  //grXFZ2D->Draw("pcol");
+  InnerGeometry(ZPosGapAllch,ZValidAllch,TrueAllch,-2,2);
 
   canvas3->cd();
   grXFPhi1DPhi->SetTitle("#phi deviation;#phi_{X-ray}[deg];#phi_{X-ray}-#phi_{Faro}[deg]");
-  grXFPhi1DPhi->SetMinimum(0);
+  //grXFPhi1DPhi->SetMinimum(0);
   grXFPhi1DPhi->SetMarkerStyle(20);
   grXFPhi1DPhi->SetMarkerColor(kRed);
   grXFPhi1DPhi->Draw("ap");
-}
+  }

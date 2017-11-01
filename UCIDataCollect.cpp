@@ -5,8 +5,8 @@ Int_t PhiRunNum=sizeof(PhiRunList)/sizeof(PhiRunList[0]);
 Int_t ZRunNum=sizeof(ZRunList)/sizeof(ZRunList[0]);
 
 void UCIDataCollect(){
-  TString foutpath = "$(MEG2SYS)/analyzer/x-ray/";
-  TString foutname = "xray_UCI_tg.root";
+  TString foutpath = "$(MEG2SYS)/analyzer/macros/xec/xray/";
+  TString foutname = "xray_UCI_corr_tg.root";
   TString foutroot = foutpath + foutname;
   TFile *fall =new TFile(foutroot.Data(),"RECREATE");
   TTree *tall =new TTree("txray","txray");
