@@ -104,13 +104,13 @@ void comp_xray_faro(){
     Double_t FaroPhiPos = XYZ2Phi(FaroXPos,FaroYPos,FaroZPos);
  TrueAllch[iCh]=true;
 
-    Bool_t ZDataQual=true;
+    Bool_t ZDataQual=false;
     if(FitQual(ZErr,false)==true){
       ZDataQual=true;
     }
 
 
-    Bool_t PhiDataQual=true;
+    Bool_t PhiDataQual=false;
     //if(PhiChiSq<5000){
     if(FitQual(PhiErr,true)==true){
       PhiDataQual=true;

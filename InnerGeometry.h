@@ -19,18 +19,18 @@ int colordtm(Double_t value,Double_t vmin, Double_t vmax){
 
 void InnerGeometry(Double_t *PropertyAllSiPM,Bool_t *MeasuredSiPM,Bool_t *validSiPM,Double_t Min,Double_t Max){
   TArrow* Zaxisar= new TArrow(0.7,0.05,0.6,0.05);
-  TText* Zaxisdesc= new TText(0.7,0,"Z");
+  TText* Zaxisdesc= new TText(0.7,0.025,"Z");
   Zaxisar->Draw();
   Zaxisdesc->Draw();
 
   TArrow* Phiaxisar= new TArrow(0.75,0.2,0.75,0.3);
-  TText* Phiaxisdesc= new TText(0.7,0.1,"phi");
+  TText* Phiaxisdesc= new TText(0.7,0.15,"phi");
   Phiaxisar->Draw();
   Phiaxisdesc->Draw();
 
 
-  TText* UStext= new TText(0.7,0.4,"US");
-  TText* DStext= new TText(0,0.4,"DS");
+  TText* UStext= new TText(0.7,0.5,"US");
+  TText* DStext= new TText(0,0.5,"DS");
   UStext->Draw();
   DStext->Draw();
 
