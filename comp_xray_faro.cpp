@@ -19,6 +19,7 @@ Double_t ZPosGapAllch[nMPPC];
 Double_t PhiPosGapAllch[nMPPC];
 Bool_t TrueAllch[nMPPC];
 Bool_t ZValidAllch[nMPPC];
+Bool_t PhiValidAllch[nMPPC];
 
 void comp_xray_faro(){
   gStyle->SetTitleOffset( 2,"XYZ");
@@ -115,7 +116,7 @@ void comp_xray_faro(){
       PhiDataQual=true;
     }
 
-    if(PhiMeasured==true&&ZMeasured==true&&PhiDataQual&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
+    if(PhiMeasured==true&&ZMeasured==true&&PhiDataQual==true&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
       //grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
       //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
       grXFZ2D->SetPoint(grXFZ2D->GetN(),FaroZPos,FaroPhiPos,XrayZPos-FaroZPos);
@@ -123,9 +124,11 @@ void comp_xray_faro(){
       ZValidAllch[iCh]=true;
     }
 
-    if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true){
+    if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true&&ZDataQual==true){
       grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),XrayPhiPos,XrayPhiPos-FaroPhiPos);
       grXFPhi2D->SetPoint(grXFPhi2D->GetN(),FaroZPos,FaroPhiPos,XrayPhiPos-FaroPhiPos);
+      PhiPosGapAllch[iCh]=XrayPhiPos-FaroPhiPos;
+      PhiValidAllch[iCh]=true;
     }
   }
 
@@ -134,8 +137,9 @@ void comp_xray_faro(){
   grXFPhi2D->SetMinimum(-0.5);
   grXFPhi2D->SetMaximum(0.5);
   grXFPhi2D->SetTitle("#Phi Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];#phi_{Xray}-#phi_{Faro}[deg]");
-  grXFPhi2D->Draw("pcol");
+  //grXFPhi2D->Draw("pcol");
   
+  InnerGeometry(PhiPosGapAllch,PhiValidAllch,TrueAllch,-0.5,0.5);
 
   canvas2->cd();
   grXFZ2D->SetMarkerStyle(20);
@@ -143,8 +147,8 @@ void comp_xray_faro(){
   grXFZ2D->SetMinimum(-2);
   grXFZ2D->SetTitle("Z Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];Z_{Xray}-Z_{Faro}[mm]");
   //grXFZ2D->Draw("pcol");
-  InnerGeometry(ZPosGapAllch,ZValidAllch,TrueAllch,-2,2);
 
+  InnerGeometry(ZPosGapAllch,ZValidAllch,TrueAllch,-2,2);
   canvas3->cd();
   grXFPhi1DPhi->SetTitle("#phi deviation;#phi_{X-ray}[deg];#phi_{X-ray}-#phi_{Faro}[deg]");
   //grXFPhi1DPhi->SetMinimum(0);

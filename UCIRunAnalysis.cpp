@@ -42,7 +42,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
   TGraphErrors* grScaler[32];
   for(int i=0;i<32;i++){
     grScaler[i]=(TGraphErrors*)frec->Get(Form("mppc%d_corr",i));
-    std::cout<<"debug"<<std::endl;
+    //std::cout<<"debug"<<std::endl;
     if(grScaler[i]==0){
       break;
     }
@@ -61,7 +61,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
     ss >> GraphPhiPos;
     //ss.ignore(12);
     //ss >> Beam;
-    std::cout<<"debug"<<std::endl;
+    //std::cout<<"debug"<<std::endl;
     SiPMPhiPosDesign[ChNum]=GraphPhiPos;
     SiPMZPosDesign[ChNum]=GraphZPos;
     TString fitfuncname;
@@ -79,9 +79,9 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
       FitFunc[i]->SetParLimits(3,0,1000);
       FitFunc[i]->SetParLimits(4,0,200);//isosceles
       grScaler[i]->Fit(Form("fit%d",i),"MNQ");
-      std::cout<<"debug"<<std::endl;
+      //std::cout<<"debug"<<std::endl;
     }else{
-      std::cout<<"debug"<<std::endl;
+      //std::cout<<"debug"<<std::endl;
       FitFunc[i]->SetRange(GraphZPos-80,GraphZPos+80);
       //FitFunc[i]->SetParameters(GraphZPos,10,2,500,40);
       FitFunc[i]->SetParameters(GraphZPos,10,2,80,40);
@@ -93,7 +93,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
       grScaler[i]->Fit(Form("fit%d",i),"MNQ");
     }
 
-      std::cout<<"debug"<<std::endl;
+      //std::cout<<"debug"<<std::endl;
     ChiSquare = FitFunc[i]->GetChisquare();
     for(int j=0;j<5;j++){
       FitResult[j] = FitFunc[i]->GetParameter(j);
