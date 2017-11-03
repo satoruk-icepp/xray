@@ -46,8 +46,14 @@ void UCI_makeplots(){
   TTree *txray = (TTree*)frec->Get("txray");
   //TTree *txray = (TTree*)frec->Get("xrayac");
 
+  const int NPCB=NRow*2;
+
   TGraph* grChZPos=new TGraph();
   TGraph* grGapCor=new TGraph();
+  TGraph* grRowZPos[NPCB];
+  TGraph* grDMPPC= new TGraph();;
+  TF1* FitLine[NPCB];
+  TH1D* Dhist= new TH1D("distance","Distance between MPPCs fit result;Distance[mm];PCBs",80,14,16);
   TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",200,0,20);
   TGraph2D* grZDev=new TGraph2D();
   TGraph2D* grPhiDev=new TGraph2D();
@@ -93,6 +99,12 @@ void UCI_makeplots(){
   Double_t tmpzpos;
   Bool_t former=false;
 
+  for(int i=0;i<NPCB;i++){
+    grRowZPos[i]= new TGraph();
+    FitLine[i]=new TF1(Form("line%d",i),"[0]*x+[1]");
+  }
+
+
   for(int iCh=0;iCh<nMPPC;iCh++){
     txray->GetEntry(iCh);
     Double_t ZPos=ZResult[0];
@@ -127,8 +139,15 @@ void UCI_makeplots(){
     }
 
     if(ZMeasured==true&&ZDataQual==true&&std::abs(ZResult[0])<120){
+      if(iCh%44<21){
+        grRowZPos[2*chline]->SetPoint(grRowZPos[2*chline]->GetN(),iCh,ZResult[0]);
+      }else{
+        grRowZPos[2*chline+1]->SetPoint(grRowZPos[2*chline+1]->GetN(),iCh,ZResult[0]);
+      }
+      Double_t ZGap;
       if(former==true){
-        WidthHist->Fill(ZResult[0]-tmpzpos);
+        ZGap=ZResult[0]-tmpzpos;
+        WidthHist->Fill(ZGap);
         //	std::cout<<"factor: "<<cos(theta)<<std::endl;
         if(ZResult[0]-tmpzpos>17.0){
           std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
@@ -142,7 +161,7 @@ void UCI_makeplots(){
       tmpzpos=ZResult[0];
       ZPosDevAllch[iCh]=ZPos-ZPosDesign;
       ZValidAllch[iCh]=true;
-      grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZResult[0]-ZPosDesign);
+      grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZPos);
       grZDev->SetPoint(grZDev->GetN(),ZPosDesign,PhiPosDesign,ZResult[0]-ZPosDesign);
     }else{
       former=false;
@@ -162,6 +181,12 @@ void UCI_makeplots(){
 
   }
 
+  for(int i=0;i<NPCB;i++){
+    grRowZPos[i]->Fit(Form("line%d",i));
+    Double_t distance=FitLine[i]->GetParameter(0);
+    grDMPPC->SetPoint(grDMPPC->GetN(),i,distance);
+    Dhist->Fill(distance);
+  }
 
   canvas1->cd();
   //TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
@@ -176,7 +201,8 @@ void UCI_makeplots(){
   grPhiDev->SetMarkerStyle(21);
   grPhiDev->SetMarkerSize(1);
   //grPhiDev->Draw("pcol");
-  InnerGeometry(PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
+  grDMPPC->Draw("ap");
+  //InnerGeometry(PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
   // canvas2->cd();
   // TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
   // ptZ->AddText("Z_{calc}-Z_{design}");
@@ -197,10 +223,12 @@ void UCI_makeplots(){
   grZDev->SetMaximum(0);
   grZDev->SetMinimum(-8);
   //  grZDev->Draw("colz");
-  InnerGeometry(ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
-
+  //InnerGeometry(ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
+Dhist->Draw();
   canvas3->cd();
-  InnerGeometry(PhiChiSqAllch,PhiMeasuredAllch,AllTrue ,0.0,2000.0);
+  grRowZPos[5]->SetMarkerStyle(20);
+  grRowZPos[5]->Draw("ap");
+  //InnerGeometry(PhiChiSqAllch,PhiMeasuredAllch,AllTrue ,0.0,2000.0);
 
   canvas4->cd();
   InnerGeometry(ZPosErrAllch,ZMeasuredAllch,AllTrue ,0.0,20.0);
