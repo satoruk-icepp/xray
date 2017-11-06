@@ -28,6 +28,7 @@ void comp_xray_faro(){
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
   TCanvas* canvas3=new TCanvas("canvas3","deformation",600,600);
+TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
 
   TString xraydatapath = "$(MEG2SYS)/analyzer/macros/xec/xray/";
   TString xrayfilename = "xray_UCI_corr_tg.root";
@@ -46,6 +47,9 @@ void comp_xray_faro(){
   TGraph2D* grXFZ2D = new TGraph2D();
   TGraph2D* grXFPhi2D = new TGraph2D();
   TGraph* grXFPhi1DPhi= new TGraph();
+  TGraph* grChXrayZPos= new TGraph();
+  TGraph* grChFaroZPos= new TGraph();
+
   TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",400,0,20);
   //WidthHist->SetStats(0); //非表示
 
@@ -122,6 +126,8 @@ void comp_xray_faro(){
       grXFZ2D->SetPoint(grXFZ2D->GetN(),FaroZPos,FaroPhiPos,XrayZPos-FaroZPos);
       ZPosGapAllch[iCh]=XrayZPos-FaroZPos;
       ZValidAllch[iCh]=true;
+      grChXrayZPos->SetPoint(grChXrayZPos->GetN(),iCh,XrayZPos);
+      grChFaroZPos->SetPoint(grChFaroZPos->GetN(),iCh,FaroZPos);
     }
 
     if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true&&ZDataQual==true){
@@ -155,4 +161,14 @@ void comp_xray_faro(){
   grXFPhi1DPhi->SetMarkerStyle(20);
   grXFPhi1DPhi->SetMarkerColor(kRed);
   grXFPhi1DPhi->Draw("ap");
+
+canvas4->cd();
+grChXrayZPos->SetMarkerStyle(20);
+grChXrayZPos->SetMarkerColor(kRed);
+grChFaroZPos->SetMarkerStyle(20);
+grChFaroZPos->SetMarkerColor(kBlue);
+
+grChXrayZPos->Draw("ap");
+grChFaroZPos->Draw("p same");
+
   }

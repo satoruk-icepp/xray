@@ -50,10 +50,10 @@ void UCI_makeplots(){
 
   TGraph* grChZPos=new TGraph();
   TGraph* grGapCor=new TGraph();
-  TGraph* grRowZPos[NPCB];
+  TGraphErrors* grRowZPos[NPCB];
   TGraph* grDMPPC= new TGraph();;
   TF1* FitLine[NPCB];
-  TH1D* Dhist= new TH1D("distance","Distance between MPPCs fit result;Distance[mm];PCBs",80,14,16);
+  TH1D* Dhist= new TH1D("distance","Distance between MPPCs fit result;Distance[mm];PCBs",160,14.5,15.5);
   TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",200,0,20);
   TGraph2D* grZDev=new TGraph2D();
   TGraph2D* grPhiDev=new TGraph2D();
@@ -100,7 +100,7 @@ void UCI_makeplots(){
   Bool_t former=false;
 
   for(int i=0;i<NPCB;i++){
-    grRowZPos[i]= new TGraph();
+    grRowZPos[i]= new TGraphErrors();
     FitLine[i]=new TF1(Form("line%d",i),"[0]*x+[1]");
   }
 
@@ -139,10 +139,18 @@ void UCI_makeplots(){
     }
 
     if(ZMeasured==true&&ZDataQual==true&&std::abs(ZResult[0])<120){
-      if(iCh%44<21){
-        grRowZPos[2*chline]->SetPoint(grRowZPos[2*chline]->GetN(),iCh,ZResult[0]);
+      Int_t indexPCB;
+      Int_t indexgraph;
+      if(iCh%44<22){
+        indexPCB=2*chline;
+        indexgraph=grRowZPos[indexPCB]->GetN();
+        grRowZPos[indexPCB]->SetPoint(indexgraph,iCh,ZResult[0]);
+        grRowZPos[indexPCB]->SetPointError(indexgraph,0,ZErr[0]);
       }else{
-        grRowZPos[2*chline+1]->SetPoint(grRowZPos[2*chline+1]->GetN(),iCh,ZResult[0]);
+        indexPCB=2*chline+1;
+        indexgraph=grRowZPos[indexPCB]->GetN();
+        grRowZPos[indexPCB]->SetPoint(indexgraph,iCh,ZResult[0]);
+        grRowZPos[indexPCB]->SetPointError(indexgraph,0,ZErr[0]);
       }
       Double_t ZGap;
       if(former==true){
@@ -182,10 +190,20 @@ void UCI_makeplots(){
   }
 
   for(int i=0;i<NPCB;i++){
-    grRowZPos[i]->Fit(Form("line%d",i));
+    grRowZPos[i]->Fit(Form("line%d",i),"Q");
     Double_t distance=FitLine[i]->GetParameter(0);
     grDMPPC->SetPoint(grDMPPC->GetN(),i,distance);
     Dhist->Fill(distance);
+std::cout<<"PCB: "<<i<<" distance: "<<distance<<" data points: "<<grRowZPos[i]->GetN()<<std::endl;
+    TString grtitle;
+    TString grtoptitle;
+    if(i%2==0){
+    grtoptitle.Form("PCB Row:%d,%s;",i/2,"US");
+    }else{
+    grtoptitle.Form("PCB Row:%d,%s;",i/2,"DS");
+    }
+    grtitle= grtoptitle+"Channel;Z Position[mm]";
+    grRowZPos[i]->SetTitle(grtitle);
   }
 
   canvas1->cd();
@@ -201,6 +219,8 @@ void UCI_makeplots(){
   grPhiDev->SetMarkerStyle(21);
   grPhiDev->SetMarkerSize(1);
   //grPhiDev->Draw("pcol");
+  grDMPPC->SetTitle("Distance between MPPCs;PCB;Distance[mm]");
+  grDMPPC->SetMarkerStyle(20);
   grDMPPC->Draw("ap");
   //InnerGeometry(PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
   // canvas2->cd();
@@ -226,8 +246,10 @@ void UCI_makeplots(){
   //InnerGeometry(ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
 Dhist->Draw();
   canvas3->cd();
-  grRowZPos[5]->SetMarkerStyle(20);
-  grRowZPos[5]->Draw("ap");
+  Int_t vispcb=47;
+  grRowZPos[vispcb]->SetMarkerStyle(20);
+  grRowZPos[vispcb]->SetMarkerColor(kRed);
+  grRowZPos[vispcb]->Draw("ap");
   //InnerGeometry(PhiChiSqAllch,PhiMeasuredAllch,AllTrue ,0.0,2000.0);
 
   canvas4->cd();
