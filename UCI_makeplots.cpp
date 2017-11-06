@@ -40,8 +40,8 @@ void UCI_makeplots(){
   TCanvas* canvas4=new TCanvas("canvas4","Chi Square",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
-  //TFile *frec = new TFile("$(MEG2SYS)/analyzer/x-ray/xray_UCI_tg.root","READ");
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_UCI_corr_tg.root","READ");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_raw_tg.root","READ");
+  //TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_UCI_corr_tg.root","READ");
   //TTree *txray = (TTree*)frec->Get("uci");
   TTree *txray = (TTree*)frec->Get("txray");
   //TTree *txray = (TTree*)frec->Get("xrayac");
@@ -107,14 +107,9 @@ void UCI_makeplots(){
     FitLine[i]=new TF1(Form("line%d",i),"[0]*x+[1]");
   }
 
-  Int_t ZQuallowZ=0;
-  Int_t ZQualwellfit=0;
-  Int_t ZQualsmalldev=0;
-  Int_t ZMeasuredMPPCs=0;
-  Int_t PhiQuallowZ=0;
-  Int_t PhiQualwellfit=0;
-  Int_t PhiQualsmalldev=0;
-  Int_t PhiMeasuredMPPCs=0;
+  Int_t ZQualArray[4]={};
+  Int_t PhiQualArray[4]={};
+  
   for(int iCh=0;iCh<nMPPC;iCh++){
     txray->GetEntry(iCh);
     Double_t ZPos=ZResult[0];
@@ -134,34 +129,10 @@ void UCI_makeplots(){
         ZPosDesign=ZPosDesign+CFRPGap[i];
       }
     }
-    Bool_t ZDataQual=false;
-    if(ZMeasured==true){
-      ++ZMeasuredMPPCs;
-      if(LargeZQual(ZPos,ZMeasured)==true){
-        ++ZQuallowZ;
-        if(FitQual(ZErr,false)==true){
-          ++ZQualwellfit;
-          if(DevQual(ZPos,ZPosDesign,false)==true){
-            ++ZQualsmalldev;
-            ZDataQual=true;
-          }
-        }
-      }
-    }
-    Bool_t PhiDataQual=false;
-    if(PhiMeasured==true){
-      ++PhiMeasuredMPPCs;
-      if(LargeZQual(ZPos,ZMeasured)==true){
-        ++PhiQuallowZ;
-        if(FitQual(PhiErr,true)==true){
-          ++PhiQualwellfit;
-          if(DevQual(PhiPos,PhiPosDesign,true)==true){
-            ++PhiQualsmalldev;
-            PhiDataQual=true;
-          }
-        }
-      }
-    }
+
+    Bool_t ZDataQual=JudgeQual(ZQualArray,false,ZMeasured,PhiMeasured,ZPos,PhiPos,ZPosDesign,ZErr);
+    Bool_t PhiDataQual=JudgeQual(PhiQualArray,true,ZMeasured,PhiMeasured,ZPos,PhiPos,PhiPosDesign,PhiErr);
+
     if(ZDataQual==true&&PhiDataQual==true){
       grAfterQC->SetPoint(grAfterQC->GetN(),ZPos,PhiPos);
     }
@@ -182,7 +153,7 @@ void UCI_makeplots(){
       Double_t ZGap;
       if(former==true){
         ZGap=ZResult[0]-tmpzpos;
-        if(iCh%2==0){
+        if(iCh%2==1){
           WidthHist->Fill(ZGap);
         }
         //	std::cout<<"factor: "<<cos(theta)<<std::endl;
