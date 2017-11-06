@@ -3,7 +3,7 @@
 void RawDataCollect(){
   //TCanvas* canvas1=new TCanvas("canvas1","map",600,600);
 
-  TString foutpath = "$(MEG2SYS)/analyzer/x-ray/";
+  TString foutpath = "$(MEG2SYS)/analyzer/macros/xec/xray/";
   TString foutname = "xray_raw_tg.root";
   TString foutroot = foutpath + foutname;
   TFile *fall =new TFile(foutroot.Data(),"RECREATE");
@@ -83,6 +83,3 @@ void RawDataCollect(){
   fall->Close();
   return;
 }
-
-
-

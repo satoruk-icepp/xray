@@ -32,8 +32,16 @@ Bool_t DevQual(Double_t Position, Double_t Design, Bool_t PhiScan){
 	}
   }else{
 	if(Gap>ZGapMax){
-	  Quality=false;	  
+	  Quality=false;
 	}
+  }
+  return Quality;
+}
+
+Bool_t LargeZQual(Double_t ZPosition, Bool_t ZMeasured){
+  Bool_t Quality=false;
+  if(std::abs(ZPosition)<120&&ZMeasured==true){
+    Quality= true;
   }
   return Quality;
 }

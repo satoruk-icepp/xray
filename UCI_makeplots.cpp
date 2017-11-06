@@ -49,9 +49,12 @@ void UCI_makeplots(){
   const int NPCB=NRow*2;
 
   TGraph* grChZPos=new TGraph();
+  TGraph* grPhiZDev=new TGraph();
   TGraph* grGapCor=new TGraph();
   TGraphErrors* grRowZPos[NPCB];
   TGraph* grDMPPC= new TGraph();;
+  TGraph* grBeforeQC= new TGraph();
+  TGraph* grAfterQC= new TGraph();
   TF1* FitLine[NPCB];
   TH1D* Dhist= new TH1D("distance","Distance between MPPCs fit result;Distance[mm];PCBs",160,14.5,15.5);
   TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",200,0,20);
@@ -104,7 +107,14 @@ void UCI_makeplots(){
     FitLine[i]=new TF1(Form("line%d",i),"[0]*x+[1]");
   }
 
-
+  Int_t ZQuallowZ=0;
+  Int_t ZQualwellfit=0;
+  Int_t ZQualsmalldev=0;
+  Int_t ZMeasuredMPPCs=0;
+  Int_t PhiQuallowZ=0;
+  Int_t PhiQualwellfit=0;
+  Int_t PhiQualsmalldev=0;
+  Int_t PhiMeasuredMPPCs=0;
   for(int iCh=0;iCh<nMPPC;iCh++){
     txray->GetEntry(iCh);
     Double_t ZPos=ZResult[0];
@@ -114,6 +124,9 @@ void UCI_makeplots(){
     ZPosErrAllch[iCh]=ZResult[2];
     PhiChiSqAllch[iCh]=PhiChiSq;
     PhiMeasuredAllch[iCh]=PhiMeasured;
+    if (ZMeasured==true&&PhiMeasured==true) {
+      grBeforeQC->SetPoint(grBeforeQC->GetN(),ZPos,PhiPos);
+    }
 
     Int_t chline=floor(iCh/NLine);
     for(int i=0;i<4;i++){
@@ -122,23 +135,37 @@ void UCI_makeplots(){
       }
     }
     Bool_t ZDataQual=false;
-    if(FitQual(ZErr,false)==true){
-      if(DevQual(ZPos,ZPosDesign,false)==true){
-        ZDataQual=true;
+    if(ZMeasured==true){
+      ++ZMeasuredMPPCs;
+      if(LargeZQual(ZPos,ZMeasured)==true){
+        ++ZQuallowZ;
+        if(FitQual(ZErr,false)==true){
+          ++ZQualwellfit;
+          if(DevQual(ZPos,ZPosDesign,false)==true){
+            ++ZQualsmalldev;
+            ZDataQual=true;
+          }
+        }
       }
     }
     Bool_t PhiDataQual=false;
-    if(FitQual(PhiErr,true)==true){
-      if(DevQual(PhiPos,PhiPosDesign,true)==true){
-        PhiDataQual=true;
-      }else{
-        std::cout<<"Calculated position is deviated: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
+    if(PhiMeasured==true){
+      ++PhiMeasuredMPPCs;
+      if(LargeZQual(ZPos,ZMeasured)==true){
+        ++PhiQuallowZ;
+        if(FitQual(PhiErr,true)==true){
+          ++PhiQualwellfit;
+          if(DevQual(PhiPos,PhiPosDesign,true)==true){
+            ++PhiQualsmalldev;
+            PhiDataQual=true;
+          }
+        }
       }
-    }else{
-      std::cout<< "Fit Quality Cut: "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
     }
-
-    if(ZMeasured==true&&ZDataQual==true&&std::abs(ZResult[0])<120){
+    if(ZDataQual==true&&PhiDataQual==true){
+      grAfterQC->SetPoint(grAfterQC->GetN(),ZPos,PhiPos);
+    }
+    if(ZDataQual==true&&PhiDataQual==true){
       Int_t indexPCB;
       Int_t indexgraph;
       if(iCh%44<22){
@@ -155,10 +182,12 @@ void UCI_makeplots(){
       Double_t ZGap;
       if(former==true){
         ZGap=ZResult[0]-tmpzpos;
-        WidthHist->Fill(ZGap);
+        if(iCh%2==0){
+          WidthHist->Fill(ZGap);
+        }
         //	std::cout<<"factor: "<<cos(theta)<<std::endl;
-        if(ZResult[0]-tmpzpos>17.0){
-          std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;		
+        if(ZGap>17.0){
+          std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
         }
       }
       if(iCh%44!=21){
@@ -171,11 +200,14 @@ void UCI_makeplots(){
       ZValidAllch[iCh]=true;
       grChZPos->SetPoint(grChZPos->GetN(),ChNum,ZPos);
       grZDev->SetPoint(grZDev->GetN(),ZPosDesign,PhiPosDesign,ZResult[0]-ZPosDesign);
+      if(PhiPos>120&&PhiPos<240){
+        grPhiZDev->SetPoint(grPhiZDev->GetN(),PhiPos,ZPos-ZPosDesign);
+      }
     }else{
       former=false;
     }
 
-    if(PhiMeasured==true&&PhiDataQual==true&&std::abs(ZResult[0])<120&&ZDataQual==true){
+    if(PhiDataQual==true){
       PhiPosDevAllch[iCh]=PhiPos-PhiPosDesign;
       PhiValidAllch[iCh]=true;
       grPhiDev->SetPoint(grPhiDev->GetN(),ZPosDesign,PhiPosDesign,PhiResult[0]-PhiPosDesign);
@@ -183,9 +215,7 @@ void UCI_makeplots(){
       former=false;
     }
     AllTrue[iCh]=true;
-    if(ZChiSq>1000){
-      //	  std::cout <<"Chi Square is larger than 1000 : "<<iCh<<std::endl;
-    }
+
 
   }
 
@@ -194,17 +224,28 @@ void UCI_makeplots(){
     Double_t distance=FitLine[i]->GetParameter(0);
     grDMPPC->SetPoint(grDMPPC->GetN(),i,distance);
     Dhist->Fill(distance);
-std::cout<<"PCB: "<<i<<" distance: "<<distance<<" data points: "<<grRowZPos[i]->GetN()<<std::endl;
+    std::cout<<"PCB: "<<i<<" distance: "<<distance<<" data points: "<<grRowZPos[i]->GetN()<<std::endl;
     TString grtitle;
     TString grtoptitle;
     if(i%2==0){
-    grtoptitle.Form("PCB Row:%d,%s;",i/2,"US");
+      grtoptitle.Form("PCB Row:%d,%s;",i/2,"US");
     }else{
-    grtoptitle.Form("PCB Row:%d,%s;",i/2,"DS");
+      grtoptitle.Form("PCB Row:%d,%s;",i/2,"DS");
     }
     grtitle= grtoptitle+"Channel;Z Position[mm]";
     grRowZPos[i]->SetTitle(grtitle);
   }
+  std::cout<<"Z Quality Cut"<<std::endl;
+  std::cout<<"Measured: "<<ZMeasuredMPPCs<<std::endl;
+  std::cout<<"Low Z: "<<ZQuallowZ<<std::endl;
+  std::cout<<"Well-fit: "<<ZQualwellfit<<std::endl;
+  std::cout<<"Small deviation: "<<ZQualsmalldev<<std::endl;
+
+  std::cout<<"Phi Quality Cut"<<std::endl;
+  std::cout<<"Measured: "<<PhiMeasuredMPPCs<<std::endl;
+  std::cout<<"Low Z: "<<PhiQuallowZ<<std::endl;
+  std::cout<<"Well-fit: "<<PhiQualwellfit<<std::endl;
+  std::cout<<"Small deviation: "<<PhiQualsmalldev<<std::endl;
 
   canvas1->cd();
   //TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
@@ -221,7 +262,18 @@ std::cout<<"PCB: "<<i<<" distance: "<<distance<<" data points: "<<grRowZPos[i]->
   //grPhiDev->Draw("pcol");
   grDMPPC->SetTitle("Distance between MPPCs;PCB;Distance[mm]");
   grDMPPC->SetMarkerStyle(20);
-  grDMPPC->Draw("ap");
+  //grDMPPC->Draw("ap");
+  grBeforeQC->GetXaxis()->SetLimits(-160,160);
+  grBeforeQC->SetMaximum(250);
+  grBeforeQC->SetMinimum(110);
+  grBeforeQC->SetMarkerStyle(21);
+  grBeforeQC->SetMarkerSize(0.5);
+  grBeforeQC->SetTitle("MPPC position;Z Position[mm];Phi Position[deg]");
+  grBeforeQC->Draw("ap");
+  grAfterQC->SetMarkerStyle(21);
+  grAfterQC->SetMarkerSize(0.5);
+  grAfterQC->SetMarkerColor(kRed);
+  grAfterQC->Draw("same p");
   //InnerGeometry(PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
   // canvas2->cd();
   // TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
@@ -244,7 +296,7 @@ std::cout<<"PCB: "<<i<<" distance: "<<distance<<" data points: "<<grRowZPos[i]->
   grZDev->SetMinimum(-8);
   //  grZDev->Draw("colz");
   //InnerGeometry(ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
-Dhist->Draw();
+  Dhist->Draw();
   canvas3->cd();
   Int_t vispcb=47;
   grRowZPos[vispcb]->SetMarkerStyle(20);
@@ -253,13 +305,14 @@ Dhist->Draw();
   //InnerGeometry(PhiChiSqAllch,PhiMeasuredAllch,AllTrue ,0.0,2000.0);
 
   canvas4->cd();
-  InnerGeometry(ZPosErrAllch,ZMeasuredAllch,AllTrue ,0.0,20.0);
+  grPhiZDev->Draw("ap");
+  //  InnerGeometry(ZPosErrAllch,ZMeasuredAllch,AllTrue ,0.0,20.0);
   /*
-     grGapCor->GetXaxis()->SetLimits(-10,10);
-     grGapCor->SetMinimum(-10);
-     grGapCor->SetMaximum(10);
-     grGapCor->Draw("ap");
-     */
+  grGapCor->GetXaxis()->SetLimits(-10,10);
+  grGapCor->SetMinimum(-10);
+  grGapCor->SetMaximum(10);
+  grGapCor->Draw("ap");
+  */
   canvas5->cd();
   canvas5->SetGrid(0,0);
   gStyle->SetFuncColor(kRed);
