@@ -40,8 +40,8 @@ void UCI_makeplots(){
   TCanvas* canvas4=new TCanvas("canvas4","Chi Square",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
 
-  TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_raw_tg.root","READ");
-  //TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_UCI_corr_tg.root","READ");
+  //TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_raw_tg.root","READ");
+  TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_UCI_corr_tg.root","READ");
   //TTree *txray = (TTree*)frec->Get("uci");
   TTree *txray = (TTree*)frec->Get("txray");
   //TTree *txray = (TTree*)frec->Get("xrayac");
@@ -109,7 +109,7 @@ void UCI_makeplots(){
 
   Int_t ZQualArray[4]={};
   Int_t PhiQualArray[4]={};
-  
+
   for(int iCh=0;iCh<nMPPC;iCh++){
     txray->GetEntry(iCh);
     Double_t ZPos=ZResult[0];
@@ -136,7 +136,7 @@ void UCI_makeplots(){
     if(ZDataQual==true&&PhiDataQual==true){
       grAfterQC->SetPoint(grAfterQC->GetN(),ZPos,PhiPos);
     }
-    if(ZDataQual==true&&PhiDataQual==true){
+    if(ZDataQual==true){
       Int_t indexPCB;
       Int_t indexgraph;
       if(iCh%44<22){
@@ -206,17 +206,6 @@ void UCI_makeplots(){
     grtitle= grtoptitle+"Channel;Z Position[mm]";
     grRowZPos[i]->SetTitle(grtitle);
   }
-  std::cout<<"Z Quality Cut"<<std::endl;
-  std::cout<<"Measured: "<<ZMeasuredMPPCs<<std::endl;
-  std::cout<<"Low Z: "<<ZQuallowZ<<std::endl;
-  std::cout<<"Well-fit: "<<ZQualwellfit<<std::endl;
-  std::cout<<"Small deviation: "<<ZQualsmalldev<<std::endl;
-
-  std::cout<<"Phi Quality Cut"<<std::endl;
-  std::cout<<"Measured: "<<PhiMeasuredMPPCs<<std::endl;
-  std::cout<<"Low Z: "<<PhiQuallowZ<<std::endl;
-  std::cout<<"Well-fit: "<<PhiQualwellfit<<std::endl;
-  std::cout<<"Small deviation: "<<PhiQualsmalldev<<std::endl;
 
   canvas1->cd();
   //TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
@@ -266,14 +255,17 @@ void UCI_makeplots(){
   grZDev->SetMaximum(0);
   grZDev->SetMinimum(-8);
   //  grZDev->Draw("colz");
-  //InnerGeometry(ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
-  Dhist->Draw();
+  //TString Title="Z_{calc}-Z_{nom}[mm]";
+  TString Title="#phi_{calc}-#phi_{nom}[deg]";
+  //InnerGeometry(Title,ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
+  InnerGeometry(Title,PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
+  //Dhist->Draw();
   canvas3->cd();
   Int_t vispcb=47;
   grRowZPos[vispcb]->SetMarkerStyle(20);
   grRowZPos[vispcb]->SetMarkerColor(kRed);
-  grRowZPos[vispcb]->Draw("ap");
-  //InnerGeometry(PhiChiSqAllch,PhiMeasuredAllch,AllTrue ,0.0,2000.0);
+  //grRowZPos[vispcb]->Draw("ap");
+  //InnerGeometry(ZChiSqAllch,ZMeasuredAllch,AllTrue ,0.0,1000.0);
 
   canvas4->cd();
   grPhiZDev->Draw("ap");

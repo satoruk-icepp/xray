@@ -32,7 +32,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
   TFile* frec;
   if(PhiScan == true ){
     frec = new TFile(Form("$(MEG2SYS)/analyzer/macros/xec/xray/ForUTokyo/corrected/PhiScan/xray%06d_corr.root", run),"READ");
-  }else{	
+  }else{
     frec = new TFile(Form("$(MEG2SYS)/analyzer/macros/xec/xray/ForUTokyo/corrected/ZScan/xray%06d_corr.root", run),"READ");
   }
 
@@ -93,7 +93,7 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
       grScaler[i]->Fit(Form("fit%d",i),"MNQ");
     }
 
-      //std::cout<<"debug"<<std::endl;
+    //std::cout<<"debug"<<std::endl;
     ChiSquare = FitFunc[i]->GetChisquare();
     for(int j=0;j<5;j++){
       FitResult[j] = FitFunc[i]->GetParameter(j);
@@ -114,20 +114,23 @@ void UCIRunAnalysis(int run, Bool_t PhiScan,Bool_t visualize=false) {
         SiPMZResult[ChNum][k]=FitResult[k];
         SiPMZErr[ChNum][k]=FitErr[k];
       }
-    }	
+    }
     if(visualize==true){
-      std::cout<<"mppc"<<i<<"Channel: "<<ChNum<<"row: "<<ChNum/44<<"line: "<<ChNum%44<<" Position: "<<FitResult[0]<<std::endl;	
+      std::cout<<"mppc"<<i<<"Channel: "<<ChNum<<"row: "<<ChNum/44<<"line: "<<ChNum%44<<" Position: "<<FitResult[0]<<std::endl;
     }
   }
   if(visualize==true){
-    Int_t visch;
-    std::cout<<"channel to visualize: ";
-    std::cin>>visch;
-    grScaler[visch]->Draw("ap");
-    FitFunc[visch]->SetLineColor(kRed);
-    FitFunc[visch]->Draw("same");
+    TCanvas* canvas1=new TCanvas("canvas1","allch",1000,600);
+    canvas1->Divide(8,4);
+    for (int i = 0; i < 32; i++) {
+      canvas1->cd(i+1);
+      Double_t Mean=FitFunc[i]->GetParameter(0);
+      grScaler[i]->GetXaxis()->SetLimits(Mean-3,Mean+3);
+      grScaler[i]->Draw("ap");
+      FitFunc[i]->SetLineColor(kRed);
+      FitFunc[i]->Draw("same");
+    }
   }
 
   return;
 }
-
