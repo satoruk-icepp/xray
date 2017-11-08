@@ -12,6 +12,7 @@
 #define kNchforXray 272
 #define NRow 93
 #define NLine 44
+#define NCFRP 4
 #define Nfitparam 5
 
 Double_t ZPosDevAllch[nMPPC];
@@ -39,7 +40,8 @@ void UCI_makeplots(){
   TCanvas* canvas3=new TCanvas("canvas3","Z position",600,600);
   TCanvas* canvas4=new TCanvas("canvas4","Chi Square",600,600);
   TCanvas* canvas5 = new TCanvas("canvas5","neighbor",600,600);
-
+  TCanvas* canvas6=new TCanvas("canvas6","Z deviation map",600,600);
+  TCanvas* canvas7=new TCanvas("canavs7","Phi deviaiton map",600,600);
   //TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_raw_tg.root","READ");
   TFile *frec = new TFile("$(MEG2SYS)/analyzer/macros/xec/xray/xray_UCI_corr_tg.root","READ");
   //TTree *txray = (TTree*)frec->Get("uci");
@@ -51,8 +53,11 @@ void UCI_makeplots(){
   TGraph* grChZPos=new TGraph();
   TGraph* grPhiZDev=new TGraph();
   TGraph* grGapCor=new TGraph();
+  TGraph* grChDisOdd=new TGraph();
+  TGraph* grChDisEven=new TGraph();
   TGraphErrors* grRowZPos[NPCB];
-  TGraph* grDMPPC= new TGraph();;
+  TGraphErrors* grColumnZPos[NLine][4];
+  TGraph* grDMPPC= new TGraph();
   TGraph* grBeforeQC= new TGraph();
   TGraph* grAfterQC= new TGraph();
   TF1* FitLine[NPCB];
@@ -63,8 +68,9 @@ void UCI_makeplots(){
   //WidthHist->SetStats(0); //非表示
 
   /*Define CFRP*/
-  Int_t CFRPOrigin[5]={0,24,47,70,93};
-  Double_t CFRPGap[4]={0,0.6,2.1,3.7};
+  Int_t CFRPOrigin[NCFRP+1]={0,24,47,70,93};
+  Double_t CFRPGap[NCFRP]={0,0.6,2.5,4.4};
+  //Double_t CFRPGap[NCFRP]={0,0,0,0};
 
   Int_t ChNum;
 
@@ -107,6 +113,13 @@ void UCI_makeplots(){
     FitLine[i]=new TF1(Form("line%d",i),"[0]*x+[1]");
   }
 
+  for (int i = 0; i < NLine; i++) {
+    for (int j = 0; j < NCFRP; j++) {
+      grColumnZPos[i][j]=new TGraphErrors();
+    }
+
+  }
+
   Int_t ZQualArray[4]={};
   Int_t PhiQualArray[4]={};
 
@@ -123,9 +136,10 @@ void UCI_makeplots(){
       grBeforeQC->SetPoint(grBeforeQC->GetN(),ZPos,PhiPos);
     }
 
-    Int_t chline=floor(iCh/NLine);
-    for(int i=0;i<4;i++){
-      if(chline>=CFRPOrigin[i]&&chline<CFRPOrigin[i+1]){
+    Int_t chrow=floor(iCh/NLine);
+    Int_t chcolumn=iCh-NLine*chrow;
+    for(int i=0;i<NCFRP;i++){
+      if(chrow>=CFRPOrigin[i]&&chrow<CFRPOrigin[i+1]){
         ZPosDesign=ZPosDesign+CFRPGap[i];
       }
     }
@@ -135,17 +149,23 @@ void UCI_makeplots(){
 
     if(ZDataQual==true&&PhiDataQual==true){
       grAfterQC->SetPoint(grAfterQC->GetN(),ZPos,PhiPos);
+      for (int j = 0; j < NCFRP; j++) {
+        if(chrow>=CFRPOrigin[j]&&chrow<CFRPOrigin[j+1]){
+          grColumnZPos[chcolumn][j]->SetPoint(grColumnZPos[chcolumn][j]->GetN(),ZPos,PhiPos);
+        }
+      }
     }
     if(ZDataQual==true){
       Int_t indexPCB;
       Int_t indexgraph;
+
       if(iCh%44<22){
-        indexPCB=2*chline;
+        indexPCB=2*chrow;
         indexgraph=grRowZPos[indexPCB]->GetN();
         grRowZPos[indexPCB]->SetPoint(indexgraph,iCh,ZResult[0]);
         grRowZPos[indexPCB]->SetPointError(indexgraph,0,ZErr[0]);
       }else{
-        indexPCB=2*chline+1;
+        indexPCB=2*chrow+1;
         indexgraph=grRowZPos[indexPCB]->GetN();
         grRowZPos[indexPCB]->SetPoint(indexgraph,iCh,ZResult[0]);
         grRowZPos[indexPCB]->SetPointError(indexgraph,0,ZErr[0]);
@@ -155,7 +175,11 @@ void UCI_makeplots(){
         ZGap=ZResult[0]-tmpzpos;
         if(iCh%2==1){
           WidthHist->Fill(ZGap);
+          grChDisOdd->SetPoint(grChDisOdd->GetN(),iCh,ZGap);
+        }else{
+          grChDisEven->SetPoint(grChDisEven->GetN(),iCh,ZGap);
         }
+
         //	std::cout<<"factor: "<<cos(theta)<<std::endl;
         if(ZGap>17.0){
           std::cout<<"iCh:  "<<iCh<<"  row:  "<<iCh/NLine<<"  line:  "<<iCh%NLine<<std::endl;
@@ -195,7 +219,7 @@ void UCI_makeplots(){
     Double_t distance=FitLine[i]->GetParameter(0);
     grDMPPC->SetPoint(grDMPPC->GetN(),i,distance);
     Dhist->Fill(distance);
-    std::cout<<"PCB: "<<i<<" distance: "<<distance<<" data points: "<<grRowZPos[i]->GetN()<<std::endl;
+    //std::cout<<"PCB: "<<i<<" distance: "<<distance<<" data points: "<<grRowZPos[i]->GetN()<<std::endl;
     TString grtitle;
     TString grtoptitle;
     if(i%2==0){
@@ -208,6 +232,37 @@ void UCI_makeplots(){
   }
 
   canvas1->cd();
+
+  canvas1->Divide(2,2);
+  Int_t VisColumn=21;
+  TF1* lin[NCFRP];
+  for (int i = 0; i < NCFRP; i++) {
+    canvas1->cd(i+1);
+    lin[i]= new TF1(Form("pol1%d",i),"1./[0]*(x-[1])",-150,150);
+    grColumnZPos[VisColumn][i]->SetTitle(Form("CFRP %d;Z Position[mm];#phi Position[deg]",i+1));
+    grColumnZPos[VisColumn][i]->SetMarkerStyle(20);
+    grColumnZPos[VisColumn][i]->SetMarkerColor(kBlue);
+    grColumnZPos[VisColumn][i]->Fit(Form("pol1%d",i),"N");
+    grColumnZPos[VisColumn][i]->Draw("ap");
+    Double_t slope = lin[i]->GetParameter(0);
+    Double_t slopeerr = lin[i]->GetParError(0);
+    Double_t cut = lin[i]->GetParameter(1);
+    Double_t cuterr = lin[i]->GetParError(1);
+    Double_t Zatphi150= slope*150.+cut;
+    Double_t Zatphi150err= slopeerr*150.+cuterr;
+    Double_t Zatphi180= slope*180.+cut;
+    Double_t Zatphi180err= slopeerr*180.+cuterr;
+    Double_t Zatphi210= slope*210.+cut;
+    Double_t Zatphi210err= slopeerr*210.+cuterr;
+    std::cout<<" Phi150: "<<Zatphi150<<"+-"<<Zatphi150err<<std::endl;
+    std::cout<<" Phi180: "<<Zatphi180<<"+-"<<Zatphi180err<<std::endl;
+    std::cout<<" Phi210: "<<Zatphi210<<"+-"<<Zatphi210err<<std::endl;
+    lin[i]->Draw("same");
+  }
+
+  std::cout<<"debug"<<lin[0]->Eval(0)<<std::endl;
+
+  canvas2->cd();
   //TPaveText *ptPhi = new TPaveText(.2,.925,.8,.975);
   // ptPhi->AddText("#phi_{calc}-#phi_{design}");
   // ptPhi->Draw();
@@ -234,6 +289,9 @@ void UCI_makeplots(){
   grAfterQC->SetMarkerSize(0.5);
   grAfterQC->SetMarkerColor(kRed);
   grAfterQC->Draw("same p");
+  for(int i=0;i<NCFRP;i++){
+    lin[i]->Draw("same");
+  }
   //InnerGeometry(PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
   // canvas2->cd();
   // TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
@@ -245,7 +303,8 @@ void UCI_makeplots(){
   // canvas3->cd();
   // grChZPos->SetTitle("Gap from the design value;channel;Gap[mm]");
   // grChZPos->Draw("ap");
-  canvas2->cd();
+
+
   //InnerGeometry(ZChiSqAllch,0,2000);
   //grZDev->SetTitle("#Phi Deviation;Z_{nom};#phi_{nom};Z_{calc}-Z_{nom}");
   grZDev->SetTitle("Z Deviation;Z_{nom}[mm];#phi_{nom}[deg];Z_{calc}-Z_{nom}[mm]");
@@ -255,10 +314,12 @@ void UCI_makeplots(){
   grZDev->SetMaximum(0);
   grZDev->SetMinimum(-8);
   //  grZDev->Draw("colz");
-  //TString Title="Z_{calc}-Z_{nom}[mm]";
-  TString Title="#phi_{calc}-#phi_{nom}[deg]";
-  //InnerGeometry(Title,ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
-  InnerGeometry(Title,PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
+
+
+
+  //
+
+
   //Dhist->Draw();
   canvas3->cd();
   Int_t vispcb=47;
@@ -266,7 +327,13 @@ void UCI_makeplots(){
   grRowZPos[vispcb]->SetMarkerColor(kRed);
   //grRowZPos[vispcb]->Draw("ap");
   //InnerGeometry(ZChiSqAllch,ZMeasuredAllch,AllTrue ,0.0,1000.0);
-
+  grChDisOdd->SetTitle("Distance between MPPCs;#ChNum;Distance[mm]");
+  grChDisOdd->SetMarkerStyle(20);
+  grChDisOdd->SetMarkerColor(kRed);
+  grChDisOdd->Draw("ap");
+  grChDisEven->SetMarkerStyle(20);
+  grChDisEven->SetMarkerColor(kBlue);
+  grChDisEven->Draw("p same");
   canvas4->cd();
   grPhiZDev->Draw("ap");
   //  InnerGeometry(ZPosErrAllch,ZMeasuredAllch,AllTrue ,0.0,20.0);
@@ -281,4 +348,11 @@ void UCI_makeplots(){
   gStyle->SetFuncColor(kRed);
   WidthHist->Fit("gaus");
   WidthHist->Draw();
+
+  canvas6->cd();
+  TString ZIGTitle="Z_{calc}-Z_{nom}[mm]";
+  InnerGeometry(ZIGTitle,ZPosDevAllch,ZMeasuredAllch,ZValidAllch,-10.0,0.0);
+  canvas7->cd();
+  TString PhiIGTitle="#phi_{calc}-#phi_{nom}[deg]";
+  InnerGeometry(PhiIGTitle,PhiPosDevAllch,PhiMeasuredAllch,PhiValidAllch,-0.5,0.5);
 }
