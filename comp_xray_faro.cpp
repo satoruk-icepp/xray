@@ -28,7 +28,7 @@ void comp_xray_faro(){
   TCanvas* canvas1=new TCanvas("canvas1","Phi gap",600,600);
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
   TCanvas* canvas3=new TCanvas("canvas3","deformation",600,600);
-TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
+  TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
 
   TString xraydatapath = "$(MEG2SYS)/analyzer/macros/xec/xray/";
   TString xrayfilename = "xray_UCI_corr_tg.root";
@@ -37,10 +37,17 @@ TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
   TTree *txray = (TTree*)fxray->Get("txray");
 
   TString farodatapath = "$(MEG2SYS)/analyzer/macros/xec/survey/";
-  TString farofilename = "XECFAROMPPC.root";
+  //TString farofilename = "XECFAROMPPC.root";
+  //TString farofilename = "FAROMPPC_ip_mesh.root";
+  //TString farofilename = "FAROMPPC_ip_mesh_shrink.root";
+  TString farofilename = "FAROMPPC_ip_mesh_polar.root";
   TString farorootfile = farodatapath+farofilename;
   TFile* ffaro = new TFile(farorootfile.Data(),"read");
-  TTree* tfaro = (TTree*)ffaro->Get("faro");
+  //TTree* tfaro = (TTree*)ffaro->Get("faro");
+  TTree* tfaro = (TTree*)ffaro->Get("tip");
+
+  TFile* fout= new TFile("CompXF_shrink.root","recreate");
+
 
   TGraph* grChZPos = new TGraph();
   TGraph* grXrayFaroCor = new TGraph();
@@ -49,6 +56,10 @@ TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
   TGraph* grXFPhi1DPhi= new TGraph();
   TGraph* grChXrayZPos= new TGraph();
   TGraph* grChFaroZPos= new TGraph();
+  TGraph2D* grFaro3D = new TGraph2D();
+  TGraph2D* grXray3D = new TGraph2D();
+  TGraph* grXrayMap = new TGraph();
+  TGraph* grFaroMap = new TGraph();
 
   TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",400,0,20);
   //WidthHist->SetStats(0); //非表示
@@ -71,7 +82,6 @@ TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
   Bool_t ZMeasured;
 
   txray->SetBranchAddress("ChNum",&XRayChNum);
-
   txray->SetBranchAddress("PhiPosDesign",&PhiPosDesign);
   txray->SetBranchAddress("PhiMeasured",&PhiMeasured);
   txray->SetBranchAddress("ZPosDesign",&ZPosDesign);
@@ -94,11 +104,12 @@ TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
   tfaro->SetBranchAddress("XPos",&FaroXPos);
   tfaro->SetBranchAddress("YPos",&FaroYPos);
   tfaro->SetBranchAddress("ZPos",&FaroZPos);
-  tfaro->SetBranchAddress("DataQual",&FaroDataQual);
+  //tfaro->SetBranchAddress("DataQual",&FaroDataQual);
 
   Int_t N=txray->GetEntries();
   std::cout<<"All channels: "<<N<<std::endl;
-
+  Int_t ZQualArray[4]={};
+  Int_t PhiQualArray[4]={};
   for(int iCh=0;iCh<nMPPC;iCh++){
     txray->GetEntry(iCh);
     tfaro->GetEntry(iCh);
@@ -106,36 +117,28 @@ TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
     Double_t XrayZPos = ZResult[0];
     Double_t XrayPhiPos = PhiResult[0];
     Double_t FaroPhiPos = XYZ2Phi(FaroXPos,FaroYPos,FaroZPos);
- TrueAllch[iCh]=true;
+    TrueAllch[iCh]=true;
 
-    Bool_t ZDataQual=false;
-    if(FitQual(ZErr,false)==true){
-      ZDataQual=true;
-    }
+    Bool_t ZDataQual=JudgeQual(ZQualArray,false,ZMeasured,PhiMeasured,XrayZPos,XrayPhiPos,ZPosDesign,ZErr);
+    Bool_t PhiDataQual=JudgeQual(PhiQualArray,true,ZMeasured,PhiMeasured,XrayZPos,XrayPhiPos,PhiPosDesign,PhiErr);
 
-
-    Bool_t PhiDataQual=false;
-    //if(PhiChiSq<5000){
-    if(FitQual(PhiErr,true)==true){
-      PhiDataQual=true;
-    }
-
-    if(PhiMeasured==true&&ZMeasured==true&&PhiDataQual==true&&ZDataQual==true&&std::abs(XrayZPos)<150&&FaroDataQual==true){
-      //grChZPos->SetPoint(iCh,ZPos,ZPos-FaroZPos);
+    if(PhiDataQual==true&&ZDataQual==true){
       //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
       grXFZ2D->SetPoint(grXFZ2D->GetN(),FaroZPos,FaroPhiPos,XrayZPos-FaroZPos);
       ZPosGapAllch[iCh]=XrayZPos-FaroZPos;
       ZValidAllch[iCh]=true;
       grChXrayZPos->SetPoint(grChXrayZPos->GetN(),iCh,XrayZPos);
-      grChFaroZPos->SetPoint(grChFaroZPos->GetN(),iCh,FaroZPos);
-    }
 
-    if(PhiMeasured==true&&ZMeasured==true&&FaroDataQual==true&&PhiDataQual==true&&ZDataQual==true){
-      grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),XrayPhiPos,XrayPhiPos-FaroPhiPos);
+      grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),FaroPhiPos,XrayPhiPos-FaroPhiPos);
       grXFPhi2D->SetPoint(grXFPhi2D->GetN(),FaroZPos,FaroPhiPos,XrayPhiPos-FaroPhiPos);
       PhiPosGapAllch[iCh]=XrayPhiPos-FaroPhiPos;
       PhiValidAllch[iCh]=true;
+
+      grFaroMap->SetPoint(grFaroMap->GetN(),FaroZPos,FaroPhiPos);
+      grXrayMap->SetPoint(grXrayMap->GetN(),XrayZPos,XrayPhiPos);
     }
+    grChFaroZPos->SetPoint(grChFaroZPos->GetN(),iCh,FaroZPos);
+    grFaro3D->SetPoint(grFaro3D->GetN(),FaroXPos,FaroYPos,FaroZPos);
   }
 
   canvas1->cd();
@@ -144,8 +147,8 @@ TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
   grXFPhi2D->SetMaximum(0.5);
   grXFPhi2D->SetTitle("#Phi Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];#phi_{Xray}-#phi_{Faro}[deg]");
   //grXFPhi2D->Draw("pcol");
-  
-  InnerGeometry(PhiPosGapAllch,PhiValidAllch,TrueAllch,-0.5,0.5);
+
+  InnerGeometry("#phi_{X-ray}-#phi_{Faro}[deg]",PhiPosGapAllch,PhiValidAllch,TrueAllch,-0.5,0.5);
 
   canvas2->cd();
   grXFZ2D->SetMarkerStyle(20);
@@ -154,21 +157,27 @@ TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
   grXFZ2D->SetTitle("Z Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];Z_{Xray}-Z_{Faro}[mm]");
   //grXFZ2D->Draw("pcol");
 
-  InnerGeometry(ZPosGapAllch,ZValidAllch,TrueAllch,-2,2);
+  InnerGeometry("Z_{Xray}-Z_{Faro}[mm]",ZPosGapAllch,ZValidAllch,TrueAllch,-2,2);
   canvas3->cd();
-  grXFPhi1DPhi->SetTitle("#phi deviation;#phi_{X-ray}[deg];#phi_{X-ray}-#phi_{Faro}[deg]");
+  grXFPhi1DPhi->SetName("phidep");
+  grXFPhi1DPhi->SetTitle("#phi deviation;#phi_{Faro}[deg];#phi_{X-ray}-#phi_{Faro}[deg]");
   //grXFPhi1DPhi->SetMinimum(0);
   grXFPhi1DPhi->SetMarkerStyle(20);
   grXFPhi1DPhi->SetMarkerColor(kRed);
   grXFPhi1DPhi->Draw("ap");
 
-canvas4->cd();
-grChXrayZPos->SetMarkerStyle(20);
-grChXrayZPos->SetMarkerColor(kRed);
-grChFaroZPos->SetMarkerStyle(20);
-grChFaroZPos->SetMarkerColor(kBlue);
+  canvas4->cd();
+  grXrayMap->SetMarkerStyle(20);
+  grXrayMap->SetMarkerColor(kRed);
+  grFaroMap->SetMarkerStyle(20);
+  grFaroMap->SetMarkerColor(kBlue);
 
-grChXrayZPos->Draw("ap");
-grChFaroZPos->Draw("p same");
+  grXrayMap->Draw("ap");
+  grFaroMap->Draw("p same");
 
-  }
+  fout->cd();
+  grXFPhi1DPhi->Write();
+  fout->Close();
+
+  //grFaro3D->Draw("p0");
+}
