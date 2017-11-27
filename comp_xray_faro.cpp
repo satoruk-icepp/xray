@@ -29,6 +29,7 @@ void comp_xray_faro(){
   TCanvas* canvas2=new TCanvas("canvas2","Z gap",600,600);
   TCanvas* canvas3=new TCanvas("canvas3","deformation",600,600);
   TCanvas* canvas4=new TCanvas("canvas4","direct comparison",600,600);
+  TCanvas* canvas5=new TCanvas("canvas5","Z deviation",600,600);
 
   TString xraydatapath = "$(MEG2SYS)/analyzer/macros/xec/xray/";
   TString xrayfilename = "xray_UCI_corr_tg.root";
@@ -54,6 +55,7 @@ void comp_xray_faro(){
   TGraph2D* grXFZ2D = new TGraph2D();
   TGraph2D* grXFPhi2D = new TGraph2D();
   TGraph* grXFPhi1DPhi= new TGraph();
+  TGraph* grXFZ1DPhi = new TGraph();
   TGraph* grChXrayZPos= new TGraph();
   TGraph* grChFaroZPos= new TGraph();
   TGraph2D* grFaro3D = new TGraph2D();
@@ -130,6 +132,7 @@ void comp_xray_faro(){
       grChXrayZPos->SetPoint(grChXrayZPos->GetN(),iCh,XrayZPos);
 
       grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),FaroPhiPos,XrayPhiPos-FaroPhiPos);
+      grXFZ1DPhi->SetPoint(grXFZ1DPhi->GetN(),FaroPhiPos,XrayZPos-FaroZPos);
       grXFPhi2D->SetPoint(grXFPhi2D->GetN(),FaroZPos,FaroPhiPos,XrayPhiPos-FaroPhiPos);
       PhiPosGapAllch[iCh]=XrayPhiPos-FaroPhiPos;
       PhiValidAllch[iCh]=true;
@@ -145,7 +148,7 @@ void comp_xray_faro(){
   grXFPhi2D->SetMarkerStyle(20);
   grXFPhi2D->SetMinimum(-0.5);
   grXFPhi2D->SetMaximum(0.5);
-  grXFPhi2D->SetTitle("#Phi Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];#phi_{Xray}-#phi_{Faro}[deg]");
+  grXFPhi2D->SetTitle("#phi_{Xray}-#phi_{Faro};Z_{Xray}[mm];#phi_{Xray}[deg];#phi_{Xray}-#phi_{Faro}[deg]");
   //grXFPhi2D->Draw("pcol");
 
   InnerGeometry("#phi_{X-ray}-#phi_{Faro}[deg]",PhiPosGapAllch,PhiValidAllch,TrueAllch,-0.5,0.5);
@@ -160,16 +163,17 @@ void comp_xray_faro(){
   InnerGeometry("Z_{Xray}-Z_{Faro}[mm]",ZPosGapAllch,ZValidAllch,TrueAllch,-2,2);
   canvas3->cd();
   grXFPhi1DPhi->SetName("phidep");
-  grXFPhi1DPhi->SetTitle("#phi deviation;#phi_{Faro}[deg];#phi_{X-ray}-#phi_{Faro}[deg]");
+  grXFPhi1DPhi->SetTitle("#Delta #phi=#phi_{Xray}-#phi_{Faro}[deg];#phi_{Faro}[deg];#Delta #phi[deg]");
   //grXFPhi1DPhi->SetMinimum(0);
-  grXFPhi1DPhi->SetMarkerStyle(20);
+  grXFPhi1DPhi->SetMarkerStyle(7);
   grXFPhi1DPhi->SetMarkerColor(kRed);
   grXFPhi1DPhi->Draw("ap");
 
   canvas4->cd();
-  grXrayMap->SetMarkerStyle(20);
+  grXrayMap->SetTitle("MPPC Position;Z[mm];#phi[deg]");
+  grXrayMap->SetMarkerStyle(7);
   grXrayMap->SetMarkerColor(kRed);
-  grFaroMap->SetMarkerStyle(20);
+  grFaroMap->SetMarkerStyle(7);
   grFaroMap->SetMarkerColor(kBlue);
 
   grXrayMap->Draw("ap");
@@ -178,6 +182,14 @@ void comp_xray_faro(){
   fout->cd();
   grXFPhi1DPhi->Write();
   fout->Close();
+
+  canvas5->cd();
+  grXFZ1DPhi->SetTitle("#Delta Z=Z_{Xray}-Z_{Faro}[mm];#phi_{Faro}[deg];#Delta Z[mm]");
+  grXFZ1DPhi->SetMaximum(3);
+  grXFZ1DPhi->SetMinimum(-3);
+  grXFZ1DPhi->SetMarkerStyle(7);
+  grXFZ1DPhi->SetMarkerColor(kRed);
+  grXFZ1DPhi->Draw("ap");
 
   //grFaro3D->Draw("p0");
 }

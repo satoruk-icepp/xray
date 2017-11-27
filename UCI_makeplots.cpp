@@ -62,10 +62,11 @@ void UCI_makeplots(){
   TGraph* grAfterQC= new TGraph();
   TF1* FitLine[NPCB];
   TH1D* Dhist= new TH1D("distance","Distance between MPPCs fit result;Distance[mm];PCBs",160,14.5,15.5);
-  TH1D* WidthHist=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",200,0,20);
+  TH1D* WidthHistOdd=new TH1D("Z Spacing","#Delta Z;#Delta Z[mm];Channels",200,0,20);
+  TH1D* WidthHistEven=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",200,0,20);
   TGraph2D* grZDev=new TGraph2D();
   TGraph2D* grPhiDev=new TGraph2D();
-  //WidthHist->SetStats(0); //非表示
+  //WidthHistOdd->SetStats(0); //非表示
 
   /*Define CFRP*/
   Int_t CFRPOrigin[NCFRP+1]={0,24,47,70,93};
@@ -174,9 +175,10 @@ void UCI_makeplots(){
       if(former==true){
         ZGap=ZResult[0]-tmpzpos;
         if(iCh%2==1){
-          WidthHist->Fill(ZGap);
+          WidthHistOdd->Fill(ZGap);
           grChDisOdd->SetPoint(grChDisOdd->GetN(),iCh,ZGap);
         }else{
+          WidthHistEven->Fill(ZGap);
           grChDisEven->SetPoint(grChDisEven->GetN(),iCh,ZGap);
         }
 
@@ -344,10 +346,13 @@ void UCI_makeplots(){
   grGapCor->Draw("ap");
   */
   canvas5->cd();
-  canvas5->SetGrid(0,0);
-  gStyle->SetFuncColor(kRed);
-  WidthHist->Fit("gaus");
-  WidthHist->Draw();
+  // canvas5->SetGrid(0,0);
+  // gStyle->SetFuncColor(kRed);
+  WidthHistOdd->SetLineColor(kBlue);
+  // WidthHistOdd->Fit("gaus");
+  WidthHistOdd->Draw();
+  WidthHistEven->SetLineColor(kRed);
+  WidthHistEven->Draw("same");
 
   canvas6->cd();
   TString ZIGTitle="Z_{calc}-Z_{nom}[mm]";
