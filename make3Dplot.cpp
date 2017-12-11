@@ -65,18 +65,19 @@ void make3Dplot(){
   geometry->SetMaximum(800);
   geometry->SetMinimum(-800);
   geometry->GetXaxis()->SetLimits(-400,400);
-  geometry->GetYaxis()->SetLimits(-800,800); 
+  geometry->GetYaxis()->SetLimits(-800,0);
   geometry->SetMarkerStyle(20);
+  geometry->SetMarkerColor(kRed);
   geometry->SetMarkerSize(0.2);
-  geometry->Draw("pcol");
+  geometry->Draw("p0");
   /*
-  
+
 	canvas2->cd();
 	TPaveText *ptZ = new TPaveText(.2,.925,.8,.975);
 	ptZ->AddText("Deviation between Designed Value in the Z Direction");
 	ptZ->Draw();
 	InnerGeometry(ZPosGapAllch,-10.0,10.0);
-  
+
 	canvas3->cd();
 	grChZPos->SetMarkerStyle(22);
 	grChZPos->SetMarkerColor(2);

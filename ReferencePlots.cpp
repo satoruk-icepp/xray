@@ -22,6 +22,8 @@ void ReferencePlots(){
   }
   TGraph2D *grLEICA = new TGraph2D();
   //TGraph* ProjLEICA=new TGraph();
+  // TH1D* devRef= new TH1D("#Delta_{Faro-Leica}","#Delta_{Faro-Leica}[mm]",10,0,0.5);
+  TGraph *devRef=new  TGraph();
 
   std::vector<std::vector<Double_t>> LEICAPos;
   std::vector<std::vector<Double_t>> FAROPos;
@@ -70,6 +72,8 @@ void ReferencePlots(){
 
 for(int i=0;i<10;i++){
   std::cout<<"difference x:"<<LEICAPos[i][0]-FAROPos[i][0]<<" y: "<<LEICAPos[i][1]-FAROPos[i][1]<<" z: "<<LEICAPos[i][2]-FAROPos[i][2]<<std::endl;
+  Double_t Deviation= TMath::Sqrt(TMath::Power(LEICAPos[i][0]-FAROPos[i][0],2)+TMath::Power(LEICAPos[i][1]-FAROPos[i][1],2)+TMath::Power(LEICAPos[i][2]-FAROPos[i][2],2));
+  devRef->SetPoint(i,i,Deviation);
 }
   //TF2 *plainUS = new TF2("planeUS",PlaneEq,-1500,1500,-1500,1500,3);
   // TF2 *plainFARO = new TF2("planeFARO", PlaneEq,-1500,1500,-1500,1500,3);
@@ -79,8 +83,8 @@ for(int i=0;i<10;i++){
   //Up stream
   canvas1->cd();
   //  grLEICA->Fit("planeUS","N");
-  grLEICA->SetMaximum(-595);
-  grLEICA->SetMinimum(-605);
+  grLEICA->SetMaximum(-550);
+  grLEICA->SetMinimum(-650);
   grLEICA->GetXaxis()->SetLimits(-1500,0);
   grLEICA->GetYaxis()->SetLimits(-1500,1500);
   grLEICA->SetMarkerStyle(20);
@@ -106,7 +110,11 @@ for(int i=0;i<10;i++){
   // plainFARO->SetTitle(DownTitle+AxisTitle);
 
   // plainFARO->Draw("surf");
-  grFARO->Draw("ap");
+  // grFARO->Draw("ap");
+  devRef->SetTitle("#Delta_{Faro-Leica};#Delta_{Faro-Leica}[mm];# of points");
+  devRef->SetMarkerStyle(20);
+  devRef->SetMarkerColor(kRed);
+  devRef->Draw("ap");
   // Double_t ThetaFARO = plainFARO->GetParameter(0);
   // Double_t PhiFARO = plainFARO->GetParameter(1);
   // Double_t DegThetaFARO = Rad2Deg(ThetaFARO);
