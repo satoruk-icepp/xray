@@ -28,7 +28,7 @@ Double_t PhiPosDevAllch[nMPPC];
 Double_t PhiChiSqAllch[nMPPC];
 Double_t PhiPosAllch[NRow][NLine];
 
-Bool_t QualAllch[NRow][NLine];
+Bool_t DataQualAllch[NRow][NLine];
 Bool_t AllTrue[nMPPC];
 
 
@@ -63,12 +63,13 @@ void UCI_makeplots(){
    TGraph* grAfterQC= new TGraph();
    TGraph* grDAQRatePhi=new TGraph();
    TGraph* grDAQRateCorr=new TGraph();
+   TGraph* grChPhiDev=new TGraph();
    TF1* FitLine[NPCB];
    TH1D* Dhist= new TH1D("distance","Distance between MPPCs fit result;Distance[mm];PCBs",160,14.5,15.5);
    TH1D* WidthHistOdd=new TH1D("Z Spacing","#Delta Z;#Delta Z[mm];Channels",200,0,20);
    TH1D* WidthHistEven=new TH1D("Distance","Distance from the next MPPC;Distance[mm];Channels",200,0,20);
-   TH1D* PhiDevHistEven= new TH1D("Phi Spacing Even","#Delta Phi;#Delta #phi[deg];channels",200,0,5);
-   TH1D* PhiDevHistOdd= new TH1D("Phi Spacing Odd","#Delta Phi;#Delta #phi[deg];channels",200,0,5);
+   TH1D* PhiDevHistEven= new TH1D("Phi Spacing Even","#Delta Phi: CFRP B;#Delta #phi[deg];channels",200,0,2);
+   TH1D* PhiDevHistOdd= new TH1D("Phi Spacing Odd","#Delta Phi;#Delta #phi[deg];channels",200,0,2);
    TGraph2D* grZDev=new TGraph2D();
    TGraph2D* grPhiDev=new TGraph2D();
    //WidthHistOdd->SetStats(0); //非表示
@@ -134,7 +135,7 @@ void UCI_makeplots(){
       Double_t ZPos=ZResult[0];
       Double_t PhiPos=PhiResult[0];
       Int_t tmprow=iCh/NLine;
-      Int_t tmpcolumn=iCh/NLine;
+      Int_t tmpcolumn=iCh%NLine;
       ZChiSqAllch[iCh]=ZChiSq;
       ZMeasuredAllch[iCh]=ZMeasured;
       ZPosErrAllch[iCh]=ZResult[2];
@@ -164,7 +165,7 @@ void UCI_makeplots(){
                grColumnZPos[chcolumn][j]->SetPoint(grColumnZPos[chcolumn][j]->GetN(),ZPos,PhiPos);
             }
          }
-         DataQual[tmprow][tmpcolumn]=true;
+         DataQualAllch[tmprow][tmpcolumn]=true;
          ZPosAllch[tmprow][tmpcolumn]=ZPos;
          PhiPosAllch[tmprow][tmpcolumn]=PhiPos;
       }
@@ -208,20 +209,22 @@ void UCI_makeplots(){
 
    for(int i=0;i<NRow;i++){
       for(int j=0;j<NLine;j++){
+         // std::cout<<"DataQual:"<<DataQualAllch[i][j]<<std::endl;
          Double_t ZGap;
          Double_t PhiGap;
-         if(DataQual[i][j]==true){
-            if(DataQual[i-1][j]==true){
-               ZGap=ZPosAllch[i][j]-ZPosAllch[i-1][j];
+         if(DataQualAllch[i][j]==true){
+            if(DataQualAllch[i][j-1]==true){
+               ZGap=ZPosAllch[i][j]-ZPosAllch[i][j-1];
                if(j%2==0&&j!=22){
                   WidthHistEven->Fill(ZGap);
                }else if(j%2==1){
                   WidthHistOdd->Fill(ZGap);
                }
             }
-            if(j>CFRPOrigin[0]&&j<CFRPOrigin[1]){
-               if(DataQual[i][j-1]==true){
-                  PhiGap=PhiPosAllch[i][j]-PhiPosAllch[i][j-1];
+            if(j>CFRPOrigin[1]&&j<CFRPOrigin[2]){
+               if(DataQualAllch[i-1][j]==true){
+                  PhiGap=PhiPosAllch[i][j]-PhiPosAllch[i-1][j];
+                  grChPhiDev->SetPoint(grChPhiDev->GetN(),i*NLine+j,PhiGap);
                   if(j%2==0){
                      PhiDevHistEven->Fill(PhiGap);
                   }else{
@@ -262,19 +265,6 @@ void UCI_makeplots(){
       grColumnZPos[VisColumn][i]->SetMarkerColor(kBlue);
       grColumnZPos[VisColumn][i]->Fit(Form("pol1%d",i),"N");
       grColumnZPos[VisColumn][i]->Draw("ap");
-      Double_t slope = lin[i]->GetParameter(0);
-      Double_t slopeerr = lin[i]->GetParError(0);
-      Double_t cut = lin[i]->GetParameter(1);
-      Double_t cuterr = lin[i]->GetParError(1);
-      Double_t Zatphi150= slope*150.+cut;
-      Double_t Zatphi150err= slopeerr*150.+cuterr;
-      Double_t Zatphi180= slope*180.+cut;
-      Double_t Zatphi180err= slopeerr*180.+cuterr;
-      Double_t Zatphi210= slope*210.+cut;
-      Double_t Zatphi210err= slopeerr*210.+cuterr;
-      std::cout<<" Phi150: "<<Zatphi150<<"+-"<<Zatphi150err<<std::endl;
-      std::cout<<" Phi180: "<<Zatphi180<<"+-"<<Zatphi180err<<std::endl;
-      std::cout<<" Phi210: "<<Zatphi210<<"+-"<<Zatphi210err<<std::endl;
       lin[i]->Draw("same");
    }
 
@@ -359,7 +349,14 @@ void UCI_makeplots(){
    grChDisEven->SetMarkerColor(kBlue);
    grChDisEven->Draw("p same");
    canvas4->cd();
-   grPhiZDev->Draw("ap");
+   // grPhiZDev->Draw("ap");
+   // PhiDevHistEven->SetLineColor(kBlue);
+   // PhiDevHistOdd->SetLineColor(kRed);
+   // PhiDevHistEven->Draw();
+   // PhiDevHistOdd->Draw("same");  
+   grChPhiDev->SetMarkerColor(kRed);
+   grChPhiDev->SetMarkerStyle(20);
+   grChPhiDev->Draw("ap");
    //  InnerGeometry(ZPosErrAllch,ZMeasuredAllch,AllTrue ,0.0,20.0);
    /*
      grGapCor->GetXaxis()->SetLimits(-10,10);

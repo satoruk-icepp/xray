@@ -21,6 +21,10 @@ Bool_t TrueAllch[nMPPC];
 Bool_t ZValidAllch[nMPPC];
 Bool_t PhiValidAllch[nMPPC];
 
+void Rotate3D(Double_t *oripos, Double_t *rotpos,Int_t axis);
+void PlusOffset(Double_t *position,Double_t *offset);
+void EulerRotation(Double_t alpha,Double_t beta, Double_t gamma,Double_t *position);
+TMatrixD Rotation(Int_t axis, Double_t angle);
 void comp_xray_faro(){
   gStyle->SetTitleOffset( 2,"XYZ");
   gStyle->SetTitleSize( 0.03,"XYZ");
@@ -41,7 +45,7 @@ void comp_xray_faro(){
   //TString farofilename = "XECFAROMPPC.root";
   //TString farofilename = "FAROMPPC_ip_mesh.root";
   //TString farofilename = "FAROMPPC_ip_mesh_shrink.root";
-  TString farofilename = "FAROMPPC_ip_mesh_polar.root";
+  TString farofilename = "FAROMPPC_ip_mesh_polar_shrink.root";
   TString farorootfile = farodatapath+farofilename;
   TFile* ffaro = new TFile(farorootfile.Data(),"read");
   //TTree* tfaro = (TTree*)ffaro->Get("faro");
@@ -52,8 +56,6 @@ void comp_xray_faro(){
 
   TGraph* grChZPos = new TGraph();
   TGraph* grXrayFaroCor = new TGraph();
-  TGraph2D* grXFZ2D = new TGraph2D();
-  TGraph2D* grXFPhi2D = new TGraph2D();
   TGraph* grXFPhi1DPhi= new TGraph();
   TGraph* grXFZ1DPhi = new TGraph();
   TGraph* grChXrayZPos= new TGraph();
@@ -115,10 +117,19 @@ void comp_xray_faro(){
   for(int iCh=0;iCh<nMPPC;iCh++){
     txray->GetEntry(iCh);
     tfaro->GetEntry(iCh);
+    Double_t FaroPos[3]={FaroXPos,FaroYPos,FaroZPos};
+    Double_t Offset[3]={0,0,0.5};
+    // Double_t FaroPosAR[3];
+    // Rotate3D(FaroPos,FaroPosAR,0);
+    PlusOffset(FaroPos,Offset);
+    EulerRotation(-0.08,0.08,0,FaroPos);
     Int_t chline=floor(iCh/NLine);
     Double_t XrayZPos = ZResult[0];
     Double_t XrayPhiPos = PhiResult[0];
-    Double_t FaroPhiPos = XYZ2Phi(FaroXPos,FaroYPos,FaroZPos);
+    Double_t FaroXPosAR=FaroPos[0];
+    Double_t FaroYPosAR=FaroPos[1];
+    Double_t FaroZPosAR=FaroPos[2];
+    Double_t FaroPhiPos = XYZ2Phi(FaroXPosAR,FaroYPosAR,FaroZPosAR);
     TrueAllch[iCh]=true;
 
     Bool_t ZDataQual=JudgeQual(ZQualArray,false,ZMeasured,PhiMeasured,XrayZPos,XrayPhiPos,ZPosDesign,ZErr);
@@ -126,41 +137,19 @@ void comp_xray_faro(){
 
     if(PhiDataQual==true&&ZDataQual==true){
       //grXrayFaroCor->SetPoint(iCh,ZPos,FaroZPos);
-      grXFZ2D->SetPoint(grXFZ2D->GetN(),FaroZPos,FaroPhiPos,XrayZPos-FaroZPos);
-      ZPosGapAllch[iCh]=XrayZPos-FaroZPos;
-      ZValidAllch[iCh]=true;
+
       grChXrayZPos->SetPoint(grChXrayZPos->GetN(),iCh,XrayZPos);
 
       grXFPhi1DPhi->SetPoint(grXFPhi1DPhi->GetN(),FaroPhiPos,XrayPhiPos-FaroPhiPos);
-      grXFZ1DPhi->SetPoint(grXFZ1DPhi->GetN(),FaroPhiPos,XrayZPos-FaroZPos);
-      grXFPhi2D->SetPoint(grXFPhi2D->GetN(),FaroZPos,FaroPhiPos,XrayPhiPos-FaroPhiPos);
-      PhiPosGapAllch[iCh]=XrayPhiPos-FaroPhiPos;
-      PhiValidAllch[iCh]=true;
+      grXFZ1DPhi->SetPoint(grXFZ1DPhi->GetN(),FaroPhiPos,XrayZPos-FaroZPosAR);
 
-      grFaroMap->SetPoint(grFaroMap->GetN(),FaroZPos,FaroPhiPos);
+
+      grFaroMap->SetPoint(grFaroMap->GetN(),FaroZPosAR,FaroPhiPos);
       grXrayMap->SetPoint(grXrayMap->GetN(),XrayZPos,XrayPhiPos);
     }
-    grChFaroZPos->SetPoint(grChFaroZPos->GetN(),iCh,FaroZPos);
-    grFaro3D->SetPoint(grFaro3D->GetN(),FaroXPos,FaroYPos,FaroZPos);
+    grChFaroZPos->SetPoint(grChFaroZPos->GetN(),iCh,FaroZPosAR);
   }
 
-  canvas1->cd();
-  grXFPhi2D->SetMarkerStyle(20);
-  grXFPhi2D->SetMinimum(-0.5);
-  grXFPhi2D->SetMaximum(0.5);
-  grXFPhi2D->SetTitle("#phi_{Xray}-#phi_{Faro};Z_{Xray}[mm];#phi_{Xray}[deg];#phi_{Xray}-#phi_{Faro}[deg]");
-  //grXFPhi2D->Draw("pcol");
-
-  InnerGeometry("#phi_{X-ray}-#phi_{Faro}[deg]",PhiPosGapAllch,PhiValidAllch,TrueAllch,-0.5,0.5);
-
-  canvas2->cd();
-  grXFZ2D->SetMarkerStyle(20);
-  grXFZ2D->SetMaximum(2);
-  grXFZ2D->SetMinimum(-2);
-  grXFZ2D->SetTitle("Z Deviation;Z_{Xray}[mm];#phi_{Xray}[deg];Z_{Xray}-Z_{Faro}[mm]");
-  //grXFZ2D->Draw("pcol");
-
-  InnerGeometry("Z_{Xray}-Z_{Faro}[mm]",ZPosGapAllch,ZValidAllch,TrueAllch,-2,2);
   canvas3->cd();
   grXFPhi1DPhi->SetName("phidep");
   grXFPhi1DPhi->SetTitle("#Delta #phi=#phi_{Xray}-#phi_{Faro}[deg];#phi_{Faro}[deg];#Delta #phi[deg]");
@@ -192,4 +181,99 @@ void comp_xray_faro(){
   grXFZ1DPhi->Draw("ap");
 
   //grFaro3D->Draw("p0");
+  Double_t position[3]={1,0,0};
+
+  // std::cout<<"matrix 0 0: " << Rotation(0,0)[0][0]<<std::endl;
+  EulerRotation(10,0,0,position);
+  std::cout<<"vector: "<<position[0]<<position[1]<<position[2]<<std::endl;
+}
+
+void Rotate3D(Double_t *oripos, Double_t *rotpos,Int_t axis){
+   Double_t theta=0.08*TMath::DegToRad();
+
+
+   Double_t Xrot[3][3]={
+      {1,0,0},
+      {0,TMath::Cos(theta),-TMath::Sin(theta)},
+      {0,TMath::Sin(theta),TMath::Cos(theta)}
+   };
+   Double_t Yrot[3][3]={
+      {TMath::Cos(theta),0,TMath::Sin(theta)},
+      {0,1,0},
+      {-TMath::Sin(theta),0,TMath::Cos(theta)}
+   };
+   Double_t Zrot[3][3]={
+      {TMath::Cos(theta),-TMath::Sin(theta),0},
+      {TMath::Sin(theta),TMath::Cos(theta),0},
+      {0,0,1}
+   };
+
+
+   for(int i=0;i<3;i++){
+      Double_t tmprot=0;
+      for(int j=0;j<3;j++){
+         tmprot+=Xrot[i][j]*oripos[j];
+      }
+      rotpos[i]=tmprot;
+   }
+}
+
+void PlusOffset(Double_t *position,Double_t *offset){
+   for(int i=0;i<3;i++){
+      position[i]+=offset[i];
+   }
+}
+
+void EulerRotation(Double_t alpha,Double_t beta, Double_t gamma,Double_t  *position){
+   TVectorD *vector = new TVectorD(3);
+   for(int i=0;i<3;i++){
+      (*vector)[i]=position[i];
+   }
+   *vector*=Rotation(2,alpha*TMath::DegToRad());
+   *vector*=Rotation(0,beta*TMath::DegToRad());
+   *vector*=Rotation(2,gamma*TMath::DegToRad());
+   for(int i=0;i<3;i++){
+      position[i]=(*vector)[i];
+   }
+}
+
+TMatrixD Rotation(Int_t axis, Double_t angle){
+   TMatrixD matrix(3,3);
+   switch(axis){
+   case 0: //X axis
+      matrix[0][0]=1;
+      matrix[0][1]=0;
+      matrix[0][2]=0;
+      matrix[1][0]=0;
+      matrix[1][1]=TMath::Cos(angle);
+      matrix[1][2]=-TMath::Sin(angle);
+      matrix[2][0]=0;
+      matrix[2][1]=TMath::Sin(angle);
+      matrix[2][2]=TMath::Cos(angle);
+      break;
+   case 1:
+      matrix[0][0]=TMath::Cos(angle);
+      matrix[0][1]=0;
+      matrix[0][2]=-TMath::Sin(angle);
+      matrix[1][0]=0;
+      matrix[1][1]=1;
+      matrix[1][2]=0;
+      matrix[2][0]=TMath::Sin(angle);
+      matrix[2][1]=0;
+      matrix[2][2]=TMath::Cos(angle);
+      break;
+   case 2:
+      matrix[0][0]=TMath::Cos(angle);
+      matrix[0][1]=-TMath::Sin(angle);
+      matrix[0][2]=0;
+      matrix[1][0]=TMath::Sin(angle);
+      matrix[1][1]=TMath::Cos(angle);
+      matrix[1][2]=0;
+      matrix[2][0]=0;
+      matrix[2][1]=0;
+      matrix[2][2]=1;
+      break;
+   }
+
+   return matrix;
 }
